@@ -27,6 +27,9 @@
 <meta name="twitter:description" content="Hello, another Emacs post, been using this code for probably a year so I&rsquo;m sharing it.
 (defun org-capture-fill-template (&amp;optional template initial annotation) &#34;Fill a template and return the filled template as a string. The template may still contain \&#34;%?\&#34; for cursor positioning.&#34; (let* ((template (or template (org-capture-get :template))) (buffer (org-capture-get :buffer)) (file (buffer-file-name (or (buffer-base-buffer buffer) buffer))) (time (let* ((c (or (org-capture-get :default-time) (current-time))) (d (decode-time c))) (if (&lt; (nth 2 d) org-extend-today-until) (encode-time 0 59 23 (1- (nth 3 d)) (nth 4 d) (nth 5 d)) c))) (v-t (format-time-string (org-time-stamp-format nil) time)) (v-T (format-time-string (org-time-stamp-format t) time)) (v-u (format-time-string (org-time-stamp-format nil t) time)) (v-U (format-time-string (org-time-stamp-format t t) time)) (v-c (and kill-ring (current-kill 0))) (v-x (or (org-get-x-clipboard &#39;PRIMARY) (org-get-x-clipboard &#39;CLIPBOARD) (org-get-x-clipboard &#39;SECONDARY) &#34;&#34;))	;ensure it is a string ;; `initial&#39; and `annotation&#39; might have been passed."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -58,289 +61,289 @@ Jan. 2, 2019
 
 <br/><br/>
 <p>Hello, another Emacs post, been using this code for probably a year so I&rsquo;m sharing it.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-emacs-lisp" data-lang="emacs-lisp">(defun org-capture-fill-template (<span style="color:#66d9ef">&amp;optional</span> template initial annotation)
-  <span style="color:#e6db74">&#34;Fill a template and return the filled template as a string.
-</span><span style="color:#e6db74">The template may still contain \&#34;%?\&#34; for cursor positioning.&#34;</span>
-  (let* ((template (or template (org-capture-get :template)))
-       (buffer (org-capture-get :buffer))
-       (file (<span style="color:#a6e22e">buffer-file-name</span> (or (<span style="color:#a6e22e">buffer-base-buffer</span> buffer) buffer)))
-       (time (let* ((c (or (org-capture-get :default-time) (<span style="color:#a6e22e">current-time</span>)))
-		    (d (<span style="color:#a6e22e">decode-time</span> c)))
-	       (if (<span style="color:#a6e22e">&lt;</span> (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">2</span> d) org-extend-today-until)
-		   (<span style="color:#a6e22e">encode-time</span> <span style="color:#ae81ff">0</span> <span style="color:#ae81ff">59</span> <span style="color:#ae81ff">23</span> (<span style="color:#a6e22e">1-</span> (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">3</span> d)) (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">4</span> d) (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">5</span> d))
-		 c)))
-       (v-t (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">nil</span>) time))
-       (v-T (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">t</span>) time))
-       (v-u (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>) time))
-       (v-U (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">t</span> <span style="color:#66d9ef">t</span>) time))
-       (v-c (and kill-ring (current-kill <span style="color:#ae81ff">0</span>)))
-       (v-x (or (org-get-x-clipboard <span style="color:#e6db74">&#39;PRIMARY</span>)
-		(org-get-x-clipboard <span style="color:#e6db74">&#39;CLIPBOARD</span>)
-		(org-get-x-clipboard <span style="color:#e6db74">&#39;SECONDARY</span>)
-		<span style="color:#e6db74">&#34;&#34;</span>))			<span style="color:#75715e">;ensure it is a string</span>
-       <span style="color:#75715e">;; `initial&#39; and `annotation&#39; might have been passed.  But if</span>
-       <span style="color:#75715e">;; the property list has them, we prefer those values.</span>
-       (v-i (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist :initial)
-		(and (<span style="color:#a6e22e">stringp</span> initial) (org-no-properties initial))
-		(org-capture-get :initial)
-		<span style="color:#e6db74">&#34;&#34;</span>))
-       (v-a
-	(let ((a (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist :annotation)
-		     annotation
-		     (org-capture-get :annotation)
-		     <span style="color:#e6db74">&#34;&#34;</span>)))
-	  <span style="color:#75715e">;; Is the link empty?  Then we do not want it...</span>
-	  (if (<span style="color:#a6e22e">equal</span> a <span style="color:#e6db74">&#34;[[]]&#34;</span>) <span style="color:#e6db74">&#34;&#34;</span> a)))
-       (l-re <span style="color:#e6db74">&#34;\\[\\[\\(.*?\\)\\]\\(\\[.*?\\]\\)?\\]&#34;</span>)
-       (v-A (if (and v-a (<span style="color:#a6e22e">string-match</span> l-re v-a))
-		(<span style="color:#a6e22e">replace-match</span> <span style="color:#e6db74">&#34;[[\\1][%^{Link description}]]&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> v-a)
-	      v-a))
-       (v-l (if (and v-a (<span style="color:#a6e22e">string-match</span> l-re v-a))
-		(<span style="color:#a6e22e">replace-match</span> <span style="color:#e6db74">&#34;\\1&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> v-a)
-	      v-a))
-       (v-n <span style="color:#a6e22e">user-full-name</span>)
-       (v-k (if (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker)
-		(org-no-properties org-clock-heading)
-	      <span style="color:#e6db74">&#34;&#34;</span>))
-       (v-K (if (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker)
-		(org-make-link-string
-		 (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34;%s::*%s&#34;</span>
-			 (<span style="color:#a6e22e">buffer-file-name</span> (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker))
-			 v-k)
-		 v-k)
-	      <span style="color:#e6db74">&#34;&#34;</span>))
-       (v-f (or (org-capture-get :original-file-nondirectory) <span style="color:#e6db74">&#34;&#34;</span>))
-       (v-F (or (org-capture-get :original-file) <span style="color:#e6db74">&#34;&#34;</span>))
-       (org-capture--clipboards
-	(<span style="color:#a6e22e">delq</span> <span style="color:#66d9ef">nil</span>
-	      (<span style="color:#a6e22e">list</span> v-i
-		    (org-get-x-clipboard <span style="color:#e6db74">&#39;PRIMARY</span>)
-		    (org-get-x-clipboard <span style="color:#e6db74">&#39;CLIPBOARD</span>)
-		    (org-get-x-clipboard <span style="color:#e6db74">&#39;SECONDARY</span>)
-		    v-c))))
+<div class="highlight"><pre class="chroma"><code class="language-emacs-lisp" data-lang="emacs-lisp"><span class="p">(</span><span class="nb">defun</span> <span class="nv">org-capture-fill-template</span> <span class="p">(</span><span class="kp">&amp;optional</span> <span class="nv">template</span> <span class="nv">initial</span> <span class="nv">annotation</span><span class="p">)</span>
+  <span class="s">&#34;Fill a template and return the filled template as a string.
+</span><span class="s">The template may still contain \&#34;%?\&#34; for cursor positioning.&#34;</span>
+  <span class="p">(</span><span class="nb">let*</span> <span class="p">((</span><span class="nv">template</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">template</span> <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:template</span><span class="p">)))</span>
+       <span class="p">(</span><span class="nv">buffer</span> <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:buffer</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">file</span> <span class="p">(</span><span class="nf">buffer-file-name</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nf">buffer-base-buffer</span> <span class="nv">buffer</span><span class="p">)</span> <span class="nv">buffer</span><span class="p">)))</span>
+       <span class="p">(</span><span class="nv">time</span> <span class="p">(</span><span class="nb">let*</span> <span class="p">((</span><span class="nv">c</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:default-time</span><span class="p">)</span> <span class="p">(</span><span class="nf">current-time</span><span class="p">)))</span>
+		    <span class="p">(</span><span class="nv">d</span> <span class="p">(</span><span class="nf">decode-time</span> <span class="nv">c</span><span class="p">)))</span>
+	       <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">&lt;</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">2</span> <span class="nv">d</span><span class="p">)</span> <span class="nv">org-extend-today-until</span><span class="p">)</span>
+		   <span class="p">(</span><span class="nf">encode-time</span> <span class="mi">0</span> <span class="mi">59</span> <span class="mi">23</span> <span class="p">(</span><span class="nf">1-</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">3</span> <span class="nv">d</span><span class="p">))</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">4</span> <span class="nv">d</span><span class="p">)</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">5</span> <span class="nv">d</span><span class="p">))</span>
+		 <span class="nv">c</span><span class="p">)))</span>
+       <span class="p">(</span><span class="nv">v-t</span> <span class="p">(</span><span class="nf">format-time-string</span> <span class="p">(</span><span class="nv">org-time-stamp-format</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">time</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-T</span> <span class="p">(</span><span class="nf">format-time-string</span> <span class="p">(</span><span class="nv">org-time-stamp-format</span> <span class="no">t</span><span class="p">)</span> <span class="nv">time</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-u</span> <span class="p">(</span><span class="nf">format-time-string</span> <span class="p">(</span><span class="nv">org-time-stamp-format</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span> <span class="nv">time</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-U</span> <span class="p">(</span><span class="nf">format-time-string</span> <span class="p">(</span><span class="nv">org-time-stamp-format</span> <span class="no">t</span> <span class="no">t</span><span class="p">)</span> <span class="nv">time</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-c</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">kill-ring</span> <span class="p">(</span><span class="nv">current-kill</span> <span class="mi">0</span><span class="p">)))</span>
+       <span class="p">(</span><span class="nv">v-x</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;PRIMARY</span><span class="p">)</span>
+		<span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;CLIPBOARD</span><span class="p">)</span>
+		<span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;SECONDARY</span><span class="p">)</span>
+		<span class="s">&#34;&#34;</span><span class="p">))</span>			<span class="c1">;ensure it is a string</span>
+       <span class="c1">;; `initial&#39; and `annotation&#39; might have been passed.  But if</span>
+       <span class="c1">;; the property list has them, we prefer those values.</span>
+       <span class="p">(</span><span class="nv">v-i</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nf">plist-get</span> <span class="nv">org-store-link-plist</span> <span class="nb">:initial</span><span class="p">)</span>
+		<span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nf">stringp</span> <span class="nv">initial</span><span class="p">)</span> <span class="p">(</span><span class="nv">org-no-properties</span> <span class="nv">initial</span><span class="p">))</span>
+		<span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:initial</span><span class="p">)</span>
+		<span class="s">&#34;&#34;</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-a</span>
+	<span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">a</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nf">plist-get</span> <span class="nv">org-store-link-plist</span> <span class="nb">:annotation</span><span class="p">)</span>
+		     <span class="nv">annotation</span>
+		     <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:annotation</span><span class="p">)</span>
+		     <span class="s">&#34;&#34;</span><span class="p">)))</span>
+	  <span class="c1">;; Is the link empty?  Then we do not want it...</span>
+	  <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">equal</span> <span class="nv">a</span> <span class="s">&#34;[[]]&#34;</span><span class="p">)</span> <span class="s">&#34;&#34;</span> <span class="nv">a</span><span class="p">)))</span>
+       <span class="p">(</span><span class="nv">l-re</span> <span class="s">&#34;\\[\\[\\(.*?\\)\\]\\(\\[.*?\\]\\)?\\]&#34;</span><span class="p">)</span>
+       <span class="p">(</span><span class="nv">v-A</span> <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">v-a</span> <span class="p">(</span><span class="nf">string-match</span> <span class="nv">l-re</span> <span class="nv">v-a</span><span class="p">))</span>
+		<span class="p">(</span><span class="nf">replace-match</span> <span class="s">&#34;[[\\1][%^{Link description}]]&#34;</span> <span class="no">nil</span> <span class="no">nil</span> <span class="nv">v-a</span><span class="p">)</span>
+	      <span class="nv">v-a</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-l</span> <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nb">and</span> <span class="nv">v-a</span> <span class="p">(</span><span class="nf">string-match</span> <span class="nv">l-re</span> <span class="nv">v-a</span><span class="p">))</span>
+		<span class="p">(</span><span class="nf">replace-match</span> <span class="s">&#34;\\1&#34;</span> <span class="no">nil</span> <span class="no">nil</span> <span class="nv">v-a</span><span class="p">)</span>
+	      <span class="nv">v-a</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-n</span> <span class="nf">user-full-name</span><span class="p">)</span>
+       <span class="p">(</span><span class="nv">v-k</span> <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">marker-buffer</span> <span class="nv">org-clock-marker</span><span class="p">)</span>
+		<span class="p">(</span><span class="nv">org-no-properties</span> <span class="nv">org-clock-heading</span><span class="p">)</span>
+	      <span class="s">&#34;&#34;</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-K</span> <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">marker-buffer</span> <span class="nv">org-clock-marker</span><span class="p">)</span>
+		<span class="p">(</span><span class="nv">org-make-link-string</span>
+		 <span class="p">(</span><span class="nf">format</span> <span class="s">&#34;%s::*%s&#34;</span>
+			 <span class="p">(</span><span class="nf">buffer-file-name</span> <span class="p">(</span><span class="nf">marker-buffer</span> <span class="nv">org-clock-marker</span><span class="p">))</span>
+			 <span class="nv">v-k</span><span class="p">)</span>
+		 <span class="nv">v-k</span><span class="p">)</span>
+	      <span class="s">&#34;&#34;</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-f</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:original-file-nondirectory</span><span class="p">)</span> <span class="s">&#34;&#34;</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">v-F</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">org-capture-get</span> <span class="nb">:original-file</span><span class="p">)</span> <span class="s">&#34;&#34;</span><span class="p">))</span>
+       <span class="p">(</span><span class="nv">org-capture--clipboards</span>
+	<span class="p">(</span><span class="nf">delq</span> <span class="no">nil</span>
+	      <span class="p">(</span><span class="nf">list</span> <span class="nv">v-i</span>
+		    <span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;PRIMARY</span><span class="p">)</span>
+		    <span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;CLIPBOARD</span><span class="p">)</span>
+		    <span class="p">(</span><span class="nv">org-get-x-clipboard</span> <span class="ss">&#39;SECONDARY</span><span class="p">)</span>
+		    <span class="nv">v-c</span><span class="p">))))</span>
 
-    (setq org-store-link-plist (<span style="color:#a6e22e">plist-put</span> org-store-link-plist :annotation v-a))
-    (setq org-store-link-plist (<span style="color:#a6e22e">plist-put</span> org-store-link-plist :initial v-i))
+    <span class="p">(</span><span class="nb">setq</span> <span class="nv">org-store-link-plist</span> <span class="p">(</span><span class="nf">plist-put</span> <span class="nv">org-store-link-plist</span> <span class="nb">:annotation</span> <span class="nv">v-a</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">setq</span> <span class="nv">org-store-link-plist</span> <span class="p">(</span><span class="nf">plist-put</span> <span class="nv">org-store-link-plist</span> <span class="nb">:initial</span> <span class="nv">v-i</span><span class="p">))</span>
 
-    (unless template
-      (setq template <span style="color:#e6db74">&#34;&#34;</span>)
-      (<span style="color:#a6e22e">message</span> <span style="color:#e6db74">&#34;no template&#34;</span>) (<span style="color:#a6e22e">ding</span>)
-      (sit-for <span style="color:#ae81ff">1</span>))
-    (save-window-excursion
-      (org-switch-to-buffer-other-window (<span style="color:#a6e22e">get-buffer-create</span> <span style="color:#e6db74">&#34;*Capture*&#34;</span>))
-      (<span style="color:#a6e22e">erase-buffer</span>)
-      (setq <span style="color:#a6e22e">buffer-file-name</span> <span style="color:#66d9ef">nil</span>)
-      (setq mark-active <span style="color:#66d9ef">nil</span>)
-      (<span style="color:#a6e22e">insert</span> template)
-      (<span style="color:#a6e22e">goto-char</span> (<span style="color:#a6e22e">point-min</span>))
+    <span class="p">(</span><span class="nb">unless</span> <span class="nv">template</span>
+      <span class="p">(</span><span class="nb">setq</span> <span class="nv">template</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">message</span> <span class="s">&#34;no template&#34;</span><span class="p">)</span> <span class="p">(</span><span class="nf">ding</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">sit-for</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">save-window-excursion</span>
+      <span class="p">(</span><span class="nv">org-switch-to-buffer-other-window</span> <span class="p">(</span><span class="nf">get-buffer-create</span> <span class="s">&#34;*Capture*&#34;</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">erase-buffer</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">setq</span> <span class="nf">buffer-file-name</span> <span class="no">nil</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">setq</span> <span class="nv">mark-active</span> <span class="no">nil</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">insert</span> <span class="nv">template</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">goto-char</span> <span class="p">(</span><span class="nf">point-min</span><span class="p">))</span>
 
-      <span style="color:#75715e">;; %[] insert contents of a file.</span>
-      (save-excursion
-      (while (<span style="color:#a6e22e">re-search-forward</span> <span style="color:#e6db74">&#34;%\\[\\(.+\\)\\]&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
-	(let ((filename (<span style="color:#a6e22e">expand-file-name</span> (match-string <span style="color:#ae81ff">1</span>)))
-	      (beg (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
-	      (end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>))))
-	  (unless (org-capture-escaped-%)
-	    (<span style="color:#a6e22e">delete-region</span> beg end)
-	    (<span style="color:#a6e22e">set-marker</span> beg <span style="color:#66d9ef">nil</span>)
-	    (<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
-	    (condition-case <span style="color:#a6e22e">error</span>
-		(<span style="color:#a6e22e">insert-file-contents</span> filename)
-	      (<span style="color:#a6e22e">error</span>
-	       (<span style="color:#a6e22e">insert</span> (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34;%%![couldn not insert %s: %s]&#34;</span>
-			       filename
-			       <span style="color:#a6e22e">error</span>))))))))
+      <span class="c1">;; %[] insert contents of a file.</span>
+      <span class="p">(</span><span class="nb">save-excursion</span>
+      <span class="p">(</span><span class="nb">while</span> <span class="p">(</span><span class="nf">re-search-forward</span> <span class="s">&#34;%\\[\\(.+\\)\\]&#34;</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span>
+	<span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">filename</span> <span class="p">(</span><span class="nf">expand-file-name</span> <span class="p">(</span><span class="nv">match-string</span> <span class="mi">1</span><span class="p">)))</span>
+	      <span class="p">(</span><span class="nv">beg</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-beginning</span> <span class="mi">0</span><span class="p">)))</span>
+	      <span class="p">(</span><span class="nv">end</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-end</span> <span class="mi">0</span><span class="p">))))</span>
+	  <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-capture-escaped-%</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nf">delete-region</span> <span class="nv">beg</span> <span class="nv">end</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nf">set-marker</span> <span class="nv">beg</span> <span class="no">nil</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nf">set-marker</span> <span class="nv">end</span> <span class="no">nil</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nb">condition-case</span> <span class="ne">error</span>
+		<span class="p">(</span><span class="nf">insert-file-contents</span> <span class="nv">filename</span><span class="p">)</span>
+	      <span class="p">(</span><span class="ne">error</span>
+	       <span class="p">(</span><span class="nf">insert</span> <span class="p">(</span><span class="nf">format</span> <span class="s">&#34;%%![couldn not insert %s: %s]&#34;</span>
+			       <span class="nv">filename</span>
+			       <span class="ne">error</span><span class="p">))))))))</span>
 
-      <span style="color:#75715e">;; Mark %() embedded elisp for later evaluation.</span>
-      (org-capture-expand-embedded-elisp <span style="color:#e6db74">&#39;mark</span>)
+      <span class="c1">;; Mark %() embedded elisp for later evaluation.</span>
+      <span class="p">(</span><span class="nv">org-capture-expand-embedded-elisp</span> <span class="ss">&#39;mark</span><span class="p">)</span>
 
-      <span style="color:#75715e">;; Expand non-interactive templates.</span>
-      (let ((regexp <span style="color:#e6db74">&#34;%\\(:[-a-za-z]+\\|&lt;\\([^&gt;\n]+\\)&gt;\\|[aAcfFikKlntTuUx]\\)&#34;</span>))
-      (save-excursion
-	(while (<span style="color:#a6e22e">re-search-forward</span> regexp <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
-	  <span style="color:#75715e">;; `org-capture-escaped-%&#39; may modify buffer and cripple</span>
-	  <span style="color:#75715e">;; match-data.  Use markers instead.  Ditto for other</span>
-	  <span style="color:#75715e">;; templates.</span>
-	  (let ((pos (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
-		(end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>)))
-		(value (match-string <span style="color:#ae81ff">1</span>))
-		(time-string (match-string <span style="color:#ae81ff">2</span>)))
-	    (unless (org-capture-escaped-%)
-	      (<span style="color:#a6e22e">delete-region</span> pos end)
-	      (<span style="color:#a6e22e">set-marker</span> pos <span style="color:#66d9ef">nil</span>)
-	      (<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
-	      (let* ((inside-sexp? (org-capture-inside-embedded-elisp-p))
-		     (replacement
-		      (pcase (<span style="color:#a6e22e">string-to-char</span> value)
-			(<span style="color:#e6db74">?&lt;</span> (<span style="color:#a6e22e">format-time-string</span> time-string time))
-			(<span style="color:#e6db74">?:</span>
-			 (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist (<span style="color:#a6e22e">intern</span> value))
-			     <span style="color:#e6db74">&#34;&#34;</span>))
-			(<span style="color:#e6db74">?i</span>
-			 (if inside-sexp? v-i
-			   <span style="color:#75715e">;; Outside embedded Lisp, repeat leading</span>
-			   <span style="color:#75715e">;; characters before initial place holder</span>
-			   <span style="color:#75715e">;; every line.</span>
-			   (let ((lead (<span style="color:#a6e22e">buffer-substring-no-properties</span>
-					(<span style="color:#a6e22e">line-beginning-position</span>) (<span style="color:#a6e22e">point</span>))))
-			     (replace-regexp-in-string <span style="color:#e6db74">&#34;\n\\(.\\)&#34;</span>
-						       (<span style="color:#a6e22e">concat</span> lead <span style="color:#e6db74">&#34;\\1&#34;</span>)
-						       v-i <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#ae81ff">1</span>))))
-			(<span style="color:#e6db74">?a</span> v-a)
-			(<span style="color:#e6db74">?A</span> v-A)
-			(<span style="color:#e6db74">?c</span> v-c)
-			(<span style="color:#e6db74">?f</span> v-f)
-			(<span style="color:#e6db74">?F</span> v-F)
-			(<span style="color:#e6db74">?k</span> v-k)
-			(<span style="color:#e6db74">?K</span> v-K)
-			(<span style="color:#e6db74">?l</span> v-l)
-			(<span style="color:#e6db74">?n</span> v-n)
-			(<span style="color:#e6db74">?t</span> v-t)
-			(<span style="color:#e6db74">?T</span> v-T)
-			(<span style="color:#e6db74">?u</span> v-u)
-			(<span style="color:#e6db74">?U</span> v-U)
-			(<span style="color:#e6db74">?x</span> v-x))))
-		(<span style="color:#a6e22e">insert</span>
-		 (if inside-sexp?
-		     <span style="color:#75715e">;; Escape sensitive characters.</span>
-		     (replace-regexp-in-string <span style="color:#e6db74">&#34;[\\\&#34;]&#34;</span> <span style="color:#e6db74">&#34;\\\\\\&amp;&#34;</span> replacement)
-		   replacement))))))))
+      <span class="c1">;; Expand non-interactive templates.</span>
+      <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">regexp</span> <span class="s">&#34;%\\(:[-a-za-z]+\\|&lt;\\([^&gt;\n]+\\)&gt;\\|[aAcfFikKlntTuUx]\\)&#34;</span><span class="p">))</span>
+      <span class="p">(</span><span class="nb">save-excursion</span>
+	<span class="p">(</span><span class="nb">while</span> <span class="p">(</span><span class="nf">re-search-forward</span> <span class="nv">regexp</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span>
+	  <span class="c1">;; `org-capture-escaped-%&#39; may modify buffer and cripple</span>
+	  <span class="c1">;; match-data.  Use markers instead.  Ditto for other</span>
+	  <span class="c1">;; templates.</span>
+	  <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">pos</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-beginning</span> <span class="mi">0</span><span class="p">)))</span>
+		<span class="p">(</span><span class="nv">end</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-end</span> <span class="mi">0</span><span class="p">)))</span>
+		<span class="p">(</span><span class="nv">value</span> <span class="p">(</span><span class="nv">match-string</span> <span class="mi">1</span><span class="p">))</span>
+		<span class="p">(</span><span class="nv">time-string</span> <span class="p">(</span><span class="nv">match-string</span> <span class="mi">2</span><span class="p">)))</span>
+	    <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-capture-escaped-%</span><span class="p">)</span>
+	      <span class="p">(</span><span class="nf">delete-region</span> <span class="nv">pos</span> <span class="nv">end</span><span class="p">)</span>
+	      <span class="p">(</span><span class="nf">set-marker</span> <span class="nv">pos</span> <span class="no">nil</span><span class="p">)</span>
+	      <span class="p">(</span><span class="nf">set-marker</span> <span class="nv">end</span> <span class="no">nil</span><span class="p">)</span>
+	      <span class="p">(</span><span class="nb">let*</span> <span class="p">((</span><span class="nv">inside-sexp?</span> <span class="p">(</span><span class="nv">org-capture-inside-embedded-elisp-p</span><span class="p">))</span>
+		     <span class="p">(</span><span class="nv">replacement</span>
+		      <span class="p">(</span><span class="nb">pcase</span> <span class="p">(</span><span class="nf">string-to-char</span> <span class="nv">value</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?&lt;</span> <span class="p">(</span><span class="nf">format-time-string</span> <span class="nv">time-string</span> <span class="nv">time</span><span class="p">))</span>
+			<span class="p">(</span><span class="sc">?:</span>
+			 <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nf">plist-get</span> <span class="nv">org-store-link-plist</span> <span class="p">(</span><span class="nf">intern</span> <span class="nv">value</span><span class="p">))</span>
+			     <span class="s">&#34;&#34;</span><span class="p">))</span>
+			<span class="p">(</span><span class="sc">?i</span>
+			 <span class="p">(</span><span class="nb">if</span> <span class="nv">inside-sexp?</span> <span class="nv">v-i</span>
+			   <span class="c1">;; Outside embedded Lisp, repeat leading</span>
+			   <span class="c1">;; characters before initial place holder</span>
+			   <span class="c1">;; every line.</span>
+			   <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">lead</span> <span class="p">(</span><span class="nf">buffer-substring-no-properties</span>
+					<span class="p">(</span><span class="nf">line-beginning-position</span><span class="p">)</span> <span class="p">(</span><span class="nf">point</span><span class="p">))))</span>
+			     <span class="p">(</span><span class="nv">replace-regexp-in-string</span> <span class="s">&#34;\n\\(.\\)&#34;</span>
+						       <span class="p">(</span><span class="nf">concat</span> <span class="nv">lead</span> <span class="s">&#34;\\1&#34;</span><span class="p">)</span>
+						       <span class="nv">v-i</span> <span class="no">nil</span> <span class="no">nil</span> <span class="mi">1</span><span class="p">))))</span>
+			<span class="p">(</span><span class="sc">?a</span> <span class="nv">v-a</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?A</span> <span class="nv">v-A</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?c</span> <span class="nv">v-c</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?f</span> <span class="nv">v-f</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?F</span> <span class="nv">v-F</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?k</span> <span class="nv">v-k</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?K</span> <span class="nv">v-K</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?l</span> <span class="nv">v-l</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?n</span> <span class="nv">v-n</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?t</span> <span class="nv">v-t</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?T</span> <span class="nv">v-T</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?u</span> <span class="nv">v-u</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?U</span> <span class="nv">v-U</span><span class="p">)</span>
+			<span class="p">(</span><span class="sc">?x</span> <span class="nv">v-x</span><span class="p">))))</span>
+		<span class="p">(</span><span class="nf">insert</span>
+		 <span class="p">(</span><span class="nb">if</span> <span class="nv">inside-sexp?</span>
+		     <span class="c1">;; Escape sensitive characters.</span>
+		     <span class="p">(</span><span class="nv">replace-regexp-in-string</span> <span class="s">&#34;[\\\&#34;]&#34;</span> <span class="s">&#34;\\\\\\&amp;&#34;</span> <span class="nv">replacement</span><span class="p">)</span>
+		   <span class="nv">replacement</span><span class="p">))))))))</span>
 
-      <span style="color:#75715e">;; Expand %() embedded Elisp.  Limit to Sexp originally marked.</span>
-      (org-capture-expand-embedded-elisp)
+      <span class="c1">;; Expand %() embedded Elisp.  Limit to Sexp originally marked.</span>
+      <span class="p">(</span><span class="nv">org-capture-expand-embedded-elisp</span><span class="p">)</span>
 
-      <span style="color:#75715e">;; Expand interactive templates.  This is the last step so that</span>
-      <span style="color:#75715e">;; template is mostly expanded when prompting happens.  Turn on</span>
-      <span style="color:#75715e">;; Org mode and set local variables.  This is to support</span>
-      <span style="color:#75715e">;; completion in interactive prompts.</span>
-      (let ((org-inhibit-startup <span style="color:#66d9ef">t</span>)) (org-mode))
-      (org-clone-local-variables buffer <span style="color:#e6db74">&#34;\\`org-&#34;</span>)
-      (let (strings)			<span style="color:#75715e">; Stores interactive answers.</span>
-      (save-excursion
-	(let ((regexp <span style="color:#e6db74">&#34;%\\^\\(?:{\\([^}]*\\)}\\)?\\([CgGLptTuU]\\)?&#34;</span>))
-	  (while (<span style="color:#a6e22e">re-search-forward</span> regexp <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
-	    (let* ((items (and (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">1</span>)
-			       (save-match-data
-				 (split-string (match-string-no-properties <span style="color:#ae81ff">1</span>)
-					       <span style="color:#e6db74">&#34;|&#34;</span>))))
-		   (key (match-string <span style="color:#ae81ff">2</span>))
-		   (beg (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
-		   (end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>)))
-		   (prompt (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">0</span> items))
-		   (default (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">1</span> items))
-		   (completions (<span style="color:#a6e22e">nthcdr</span> <span style="color:#ae81ff">2</span> items)))
-	      (unless (org-capture-escaped-%)
-		(<span style="color:#a6e22e">delete-region</span> beg end)
-		(<span style="color:#a6e22e">set-marker</span> beg <span style="color:#66d9ef">nil</span>)
-		(<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
-		(pcase key
-		  ((or <span style="color:#e6db74">&#34;G&#34;</span> <span style="color:#e6db74">&#34;g&#34;</span>)
-		   (my/set-tags))
-		  ((or <span style="color:#e6db74">&#34;C&#34;</span> <span style="color:#e6db74">&#34;L&#34;</span>)
-		   (let ((insert-fun (if (<span style="color:#a6e22e">equal</span> key <span style="color:#e6db74">&#34;C&#34;</span>) <span style="color:#a6e22e">#&#39;insert</span>
-				       (lambda (s) (org-insert-link <span style="color:#ae81ff">0</span> s)))))
-		     (pcase org-capture--clipboards
-		       (<span style="color:#f92672">`</span><span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span>)
-		       (<span style="color:#f92672">`</span>(<span style="color:#f92672">,</span>value) (<span style="color:#a6e22e">funcall</span> insert-fun value))
-		       (<span style="color:#f92672">`</span>(<span style="color:#f92672">,</span>first-value <span style="color:#f92672">.</span> <span style="color:#f92672">,</span>_)
-			(<span style="color:#a6e22e">funcall</span> insert-fun
-				 (<span style="color:#a6e22e">read-string</span> <span style="color:#e6db74">&#34;Clipboard/kill value: &#34;</span>
-					      first-value
-					      <span style="color:#e6db74">&#39;org-capture--clipboards</span>
-					      first-value)))
-		       (_ (<span style="color:#a6e22e">error</span> <span style="color:#e6db74">&#34;Invalid </span><span style="color:#e6db74">`org-capture--clipboards&#39;</span><span style="color:#e6db74"> value: %S&#34;</span>
-				 org-capture--clipboards)))))
-		  (<span style="color:#e6db74">&#34;p&#34;</span> (org-set-property prompt <span style="color:#66d9ef">nil</span>))
-		  ((or <span style="color:#e6db74">&#34;t&#34;</span> <span style="color:#e6db74">&#34;T&#34;</span> <span style="color:#e6db74">&#34;u&#34;</span> <span style="color:#e6db74">&#34;U&#34;</span>)
-		   <span style="color:#75715e">;; These are the date/time related ones.</span>
-		   (let* ((upcase? (<span style="color:#a6e22e">equal</span> (<span style="color:#a6e22e">upcase</span> key) key))
-			  (org-end-time-was-given <span style="color:#66d9ef">nil</span>)
-			  (time (org-read-date upcase? <span style="color:#66d9ef">t</span> <span style="color:#66d9ef">nil</span> prompt)))
-		     (org-insert-time-stamp
-		      time (or org-time-was-given upcase?)
-		      (<span style="color:#a6e22e">member</span> key <span style="color:#f92672">&#39;</span>(<span style="color:#e6db74">&#34;u&#34;</span> <span style="color:#e6db74">&#34;U&#34;</span>))
-		      <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> (<span style="color:#a6e22e">list</span> org-end-time-was-given))))
-		  (<span style="color:#f92672">`</span><span style="color:#66d9ef">nil</span>
-		   <span style="color:#75715e">;; Load history list for current prompt.</span>
-		   (setq org-capture--prompt-history
-			 (<span style="color:#a6e22e">gethash</span> prompt org-capture--prompt-history-table))
-		   (push (org-completing-read
-			  (<span style="color:#a6e22e">concat</span> (or prompt <span style="color:#e6db74">&#34;Enter string&#34;</span>)
-				  (and default (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34; [%s]&#34;</span> default))
-				  <span style="color:#e6db74">&#34;: &#34;</span>)
-			  completions
-			  <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#e6db74">&#39;org-capture--prompt-history</span> default)
-			 strings)
-		   (<span style="color:#a6e22e">insert</span> (<span style="color:#a6e22e">car</span> strings))
-		   <span style="color:#75715e">;; Save updated history list for current prompt.</span>
-		   (<span style="color:#a6e22e">puthash</span> prompt org-capture--prompt-history
-			    org-capture--prompt-history-table))
-		  (_
-		   (<span style="color:#a6e22e">error</span> <span style="color:#e6db74">&#34;Unknown template placeholder: \&#34;%%^%s\&#34;&#34;</span>
-			  key))))))))
+      <span class="c1">;; Expand interactive templates.  This is the last step so that</span>
+      <span class="c1">;; template is mostly expanded when prompting happens.  Turn on</span>
+      <span class="c1">;; Org mode and set local variables.  This is to support</span>
+      <span class="c1">;; completion in interactive prompts.</span>
+      <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">org-inhibit-startup</span> <span class="no">t</span><span class="p">))</span> <span class="p">(</span><span class="nv">org-mode</span><span class="p">))</span>
+      <span class="p">(</span><span class="nv">org-clone-local-variables</span> <span class="nv">buffer</span> <span class="s">&#34;\\`org-&#34;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">let</span> <span class="p">(</span><span class="nv">strings</span><span class="p">)</span>			<span class="c1">; Stores interactive answers.</span>
+      <span class="p">(</span><span class="nb">save-excursion</span>
+	<span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">regexp</span> <span class="s">&#34;%\\^\\(?:{\\([^}]*\\)}\\)?\\([CgGLptTuU]\\)?&#34;</span><span class="p">))</span>
+	  <span class="p">(</span><span class="nb">while</span> <span class="p">(</span><span class="nf">re-search-forward</span> <span class="nv">regexp</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nb">let*</span> <span class="p">((</span><span class="nv">items</span> <span class="p">(</span><span class="nb">and</span> <span class="p">(</span><span class="nf">match-end</span> <span class="mi">1</span><span class="p">)</span>
+			       <span class="p">(</span><span class="nb">save-match-data</span>
+				 <span class="p">(</span><span class="nv">split-string</span> <span class="p">(</span><span class="nv">match-string-no-properties</span> <span class="mi">1</span><span class="p">)</span>
+					       <span class="s">&#34;|&#34;</span><span class="p">))))</span>
+		   <span class="p">(</span><span class="nv">key</span> <span class="p">(</span><span class="nv">match-string</span> <span class="mi">2</span><span class="p">))</span>
+		   <span class="p">(</span><span class="nv">beg</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-beginning</span> <span class="mi">0</span><span class="p">)))</span>
+		   <span class="p">(</span><span class="nv">end</span> <span class="p">(</span><span class="nf">copy-marker</span> <span class="p">(</span><span class="nf">match-end</span> <span class="mi">0</span><span class="p">)))</span>
+		   <span class="p">(</span><span class="nv">prompt</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">0</span> <span class="nv">items</span><span class="p">))</span>
+		   <span class="p">(</span><span class="nv">default</span> <span class="p">(</span><span class="nf">nth</span> <span class="mi">1</span> <span class="nv">items</span><span class="p">))</span>
+		   <span class="p">(</span><span class="nv">completions</span> <span class="p">(</span><span class="nf">nthcdr</span> <span class="mi">2</span> <span class="nv">items</span><span class="p">)))</span>
+	      <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-capture-escaped-%</span><span class="p">)</span>
+		<span class="p">(</span><span class="nf">delete-region</span> <span class="nv">beg</span> <span class="nv">end</span><span class="p">)</span>
+		<span class="p">(</span><span class="nf">set-marker</span> <span class="nv">beg</span> <span class="no">nil</span><span class="p">)</span>
+		<span class="p">(</span><span class="nf">set-marker</span> <span class="nv">end</span> <span class="no">nil</span><span class="p">)</span>
+		<span class="p">(</span><span class="nb">pcase</span> <span class="nv">key</span>
+		  <span class="p">((</span><span class="nb">or</span> <span class="s">&#34;G&#34;</span> <span class="s">&#34;g&#34;</span><span class="p">)</span>
+		   <span class="p">(</span><span class="nv">my/set-tags</span><span class="p">))</span>
+		  <span class="p">((</span><span class="nb">or</span> <span class="s">&#34;C&#34;</span> <span class="s">&#34;L&#34;</span><span class="p">)</span>
+		   <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">insert-fun</span> <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">equal</span> <span class="nv">key</span> <span class="s">&#34;C&#34;</span><span class="p">)</span> <span class="nf">#&#39;insert</span>
+				       <span class="p">(</span><span class="nb">lambda</span> <span class="p">(</span><span class="nv">s</span><span class="p">)</span> <span class="p">(</span><span class="nv">org-insert-link</span> <span class="mi">0</span> <span class="nv">s</span><span class="p">)))))</span>
+		     <span class="p">(</span><span class="nb">pcase</span> <span class="nv">org-capture--clipboards</span>
+		       <span class="p">(</span><span class="o">`</span><span class="no">nil</span> <span class="no">nil</span><span class="p">)</span>
+		       <span class="p">(</span><span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="nv">value</span><span class="p">)</span> <span class="p">(</span><span class="nf">funcall</span> <span class="nv">insert-fun</span> <span class="nv">value</span><span class="p">))</span>
+		       <span class="p">(</span><span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="nv">first-value</span> <span class="o">.</span> <span class="o">,</span><span class="nv">_</span><span class="p">)</span>
+			<span class="p">(</span><span class="nf">funcall</span> <span class="nv">insert-fun</span>
+				 <span class="p">(</span><span class="nf">read-string</span> <span class="s">&#34;Clipboard/kill value: &#34;</span>
+					      <span class="nv">first-value</span>
+					      <span class="ss">&#39;org-capture--clipboards</span>
+					      <span class="nv">first-value</span><span class="p">)))</span>
+		       <span class="p">(</span><span class="nv">_</span> <span class="p">(</span><span class="ne">error</span> <span class="s">&#34;Invalid </span><span class="ss">`org-capture--clipboards&#39;</span><span class="s"> value: %S&#34;</span>
+				 <span class="nv">org-capture--clipboards</span><span class="p">)))))</span>
+		  <span class="p">(</span><span class="s">&#34;p&#34;</span> <span class="p">(</span><span class="nv">org-set-property</span> <span class="nv">prompt</span> <span class="no">nil</span><span class="p">))</span>
+		  <span class="p">((</span><span class="nb">or</span> <span class="s">&#34;t&#34;</span> <span class="s">&#34;T&#34;</span> <span class="s">&#34;u&#34;</span> <span class="s">&#34;U&#34;</span><span class="p">)</span>
+		   <span class="c1">;; These are the date/time related ones.</span>
+		   <span class="p">(</span><span class="nb">let*</span> <span class="p">((</span><span class="nv">upcase?</span> <span class="p">(</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">upcase</span> <span class="nv">key</span><span class="p">)</span> <span class="nv">key</span><span class="p">))</span>
+			  <span class="p">(</span><span class="nv">org-end-time-was-given</span> <span class="no">nil</span><span class="p">)</span>
+			  <span class="p">(</span><span class="nv">time</span> <span class="p">(</span><span class="nv">org-read-date</span> <span class="nv">upcase?</span> <span class="no">t</span> <span class="no">nil</span> <span class="nv">prompt</span><span class="p">)))</span>
+		     <span class="p">(</span><span class="nv">org-insert-time-stamp</span>
+		      <span class="nv">time</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">org-time-was-given</span> <span class="nv">upcase?</span><span class="p">)</span>
+		      <span class="p">(</span><span class="nf">member</span> <span class="nv">key</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&#34;u&#34;</span> <span class="s">&#34;U&#34;</span><span class="p">))</span>
+		      <span class="no">nil</span> <span class="no">nil</span> <span class="p">(</span><span class="nf">list</span> <span class="nv">org-end-time-was-given</span><span class="p">))))</span>
+		  <span class="p">(</span><span class="o">`</span><span class="no">nil</span>
+		   <span class="c1">;; Load history list for current prompt.</span>
+		   <span class="p">(</span><span class="nb">setq</span> <span class="nv">org-capture--prompt-history</span>
+			 <span class="p">(</span><span class="nf">gethash</span> <span class="nv">prompt</span> <span class="nv">org-capture--prompt-history-table</span><span class="p">))</span>
+		   <span class="p">(</span><span class="nb">push</span> <span class="p">(</span><span class="nv">org-completing-read</span>
+			  <span class="p">(</span><span class="nf">concat</span> <span class="p">(</span><span class="nb">or</span> <span class="nv">prompt</span> <span class="s">&#34;Enter string&#34;</span><span class="p">)</span>
+				  <span class="p">(</span><span class="nb">and</span> <span class="nv">default</span> <span class="p">(</span><span class="nf">format</span> <span class="s">&#34; [%s]&#34;</span> <span class="nv">default</span><span class="p">))</span>
+				  <span class="s">&#34;: &#34;</span><span class="p">)</span>
+			  <span class="nv">completions</span>
+			  <span class="no">nil</span> <span class="no">nil</span> <span class="no">nil</span> <span class="ss">&#39;org-capture--prompt-history</span> <span class="nv">default</span><span class="p">)</span>
+			 <span class="nv">strings</span><span class="p">)</span>
+		   <span class="p">(</span><span class="nf">insert</span> <span class="p">(</span><span class="nf">car</span> <span class="nv">strings</span><span class="p">))</span>
+		   <span class="c1">;; Save updated history list for current prompt.</span>
+		   <span class="p">(</span><span class="nf">puthash</span> <span class="nv">prompt</span> <span class="nv">org-capture--prompt-history</span>
+			    <span class="nv">org-capture--prompt-history-table</span><span class="p">))</span>
+		  <span class="p">(</span><span class="nv">_</span>
+		   <span class="p">(</span><span class="ne">error</span> <span class="s">&#34;Unknown template placeholder: \&#34;%%^%s\&#34;&#34;</span>
+			  <span class="nv">key</span><span class="p">))))))))</span>
 
-      <span style="color:#75715e">;; Replace %n escapes with nth %^{...} string.</span>
-      (setq strings (<span style="color:#a6e22e">nreverse</span> strings))
-      (save-excursion
-	(while (<span style="color:#a6e22e">re-search-forward</span> <span style="color:#e6db74">&#34;%\\\\\\([1-9][0-9]*\\)&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
-	  (unless (org-capture-escaped-%)
-	    (<span style="color:#a6e22e">replace-match</span>
-	     (<span style="color:#a6e22e">nth</span> (<span style="color:#a6e22e">1-</span> (<span style="color:#a6e22e">string-to-number</span> (match-string <span style="color:#ae81ff">1</span>))) strings)
-	     <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)))))
+      <span class="c1">;; Replace %n escapes with nth %^{...} string.</span>
+      <span class="p">(</span><span class="nb">setq</span> <span class="nv">strings</span> <span class="p">(</span><span class="nf">nreverse</span> <span class="nv">strings</span><span class="p">))</span>
+      <span class="p">(</span><span class="nb">save-excursion</span>
+	<span class="p">(</span><span class="nb">while</span> <span class="p">(</span><span class="nf">re-search-forward</span> <span class="s">&#34;%\\\\\\([1-9][0-9]*\\)&#34;</span> <span class="no">nil</span> <span class="no">t</span><span class="p">)</span>
+	  <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-capture-escaped-%</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nf">replace-match</span>
+	     <span class="p">(</span><span class="nf">nth</span> <span class="p">(</span><span class="nf">1-</span> <span class="p">(</span><span class="nf">string-to-number</span> <span class="p">(</span><span class="nv">match-string</span> <span class="mi">1</span><span class="p">)))</span> <span class="nv">strings</span><span class="p">)</span>
+	     <span class="no">nil</span> <span class="no">t</span><span class="p">)))))</span>
 
-      <span style="color:#75715e">;; Make sure there are no empty lines before the text, and that</span>
-      <span style="color:#75715e">;; it ends with a newline character.</span>
-      (<span style="color:#a6e22e">skip-chars-forward</span> <span style="color:#e6db74">&#34; \t\n&#34;</span>)
-      (<span style="color:#a6e22e">delete-region</span> (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">line-beginning-position</span>))
-      (<span style="color:#a6e22e">goto-char</span> (<span style="color:#a6e22e">point-max</span>))
-      (<span style="color:#a6e22e">skip-chars-backward</span> <span style="color:#e6db74">&#34; \t\n&#34;</span>)
-      (<span style="color:#a6e22e">delete-region</span> (<span style="color:#a6e22e">point</span>) (<span style="color:#a6e22e">point-max</span>))
-      (<span style="color:#a6e22e">insert</span> <span style="color:#e6db74">&#34;\n&#34;</span>)
+      <span class="c1">;; Make sure there are no empty lines before the text, and that</span>
+      <span class="c1">;; it ends with a newline character.</span>
+      <span class="p">(</span><span class="nf">skip-chars-forward</span> <span class="s">&#34; \t\n&#34;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">delete-region</span> <span class="p">(</span><span class="nf">point-min</span><span class="p">)</span> <span class="p">(</span><span class="nf">line-beginning-position</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">goto-char</span> <span class="p">(</span><span class="nf">point-max</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">skip-chars-backward</span> <span class="s">&#34; \t\n&#34;</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">delete-region</span> <span class="p">(</span><span class="nf">point</span><span class="p">)</span> <span class="p">(</span><span class="nf">point-max</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">insert</span> <span class="s">&#34;\n&#34;</span><span class="p">)</span>
 
-      <span style="color:#75715e">;; Return the expanded template and kill the capture buffer.</span>
-      (untabify (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">point-max</span>))
-      (<span style="color:#a6e22e">set-buffer-modified-p</span> <span style="color:#66d9ef">nil</span>)
-      (prog1 (<span style="color:#a6e22e">buffer-substring-no-properties</span> (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">point-max</span>))
-      (<span style="color:#a6e22e">kill-buffer</span> (<span style="color:#a6e22e">current-buffer</span>))))))
+      <span class="c1">;; Return the expanded template and kill the capture buffer.</span>
+      <span class="p">(</span><span class="nv">untabify</span> <span class="p">(</span><span class="nf">point-min</span><span class="p">)</span> <span class="p">(</span><span class="nf">point-max</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">set-buffer-modified-p</span> <span class="no">nil</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">prog1</span> <span class="p">(</span><span class="nf">buffer-substring-no-properties</span> <span class="p">(</span><span class="nf">point-min</span><span class="p">)</span> <span class="p">(</span><span class="nf">point-max</span><span class="p">))</span>
+      <span class="p">(</span><span class="nf">kill-buffer</span> <span class="p">(</span><span class="nf">current-buffer</span><span class="p">))))))</span>
 
 
-<span style="color:#75715e">;;  complete from all agenda files as default behavior due to bug to the procedure</span>
-(defun counsel-org-tag ()
-  <span style="color:#e6db74">&#34;Add or remove tags in </span><span style="color:#e6db74">`org-mode&#39;</span><span style="color:#e6db74">.&#34;</span>
-  (interactive)
-  (save-excursion
-    (if (<span style="color:#a6e22e">eq</span> major-mode <span style="color:#e6db74">&#39;org-agenda-mode</span>)
-      (if org-agenda-bulk-marked-entries
-	  (setq counsel-org-tags <span style="color:#66d9ef">nil</span>)
-	(let ((hdmarker (or (org-get-at-bol <span style="color:#e6db74">&#39;org-hd-marker</span>)
-			    (org-agenda-error))))
-	  (with-current-buffer (<span style="color:#a6e22e">marker-buffer</span> hdmarker)
-	    (<span style="color:#a6e22e">goto-char</span> hdmarker)
-	    (setq counsel-org-tags
-		  (split-string (org-get-tags-string) <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#66d9ef">t</span>)))))
-      (unless (org-at-heading-p)
-      (org-back-to-heading <span style="color:#66d9ef">t</span>))
-      (setq counsel-org-tags (split-string (org-get-tags-string) <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#66d9ef">t</span>)))
-    (let ((org-setting-tags <span style="color:#66d9ef">t</span>)
-	(org-last-tags-completion-table
-	 (<span style="color:#a6e22e">append</span> org-tag-persistent-alist
-		 (org-global-tags-completion-table
-		  (org-agenda-files)))))
-      (ivy-read (counsel-org-tag-prompt)
-	      (lambda (str <span style="color:#66d9ef">&amp;rest</span> _unused)
-		(delete-dups
-		 (<span style="color:#a6e22e">all-completions</span> str <span style="color:#e6db74">&#39;org-tags-completion-function</span>)))
-	      :history <span style="color:#e6db74">&#39;org-tags-history</span>
-	      :action <span style="color:#e6db74">&#39;counsel-org-tag-action</span>
-	      :caller <span style="color:#e6db74">&#39;counsel-org-tag</span>))))
+<span class="c1">;;  complete from all agenda files as default behavior due to bug to the procedure</span>
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">counsel-org-tag</span> <span class="p">()</span>
+  <span class="s">&#34;Add or remove tags in </span><span class="ss">`org-mode&#39;</span><span class="s">.&#34;</span>
+  <span class="p">(</span><span class="nb">interactive</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">save-excursion</span>
+    <span class="p">(</span><span class="nb">if</span> <span class="p">(</span><span class="nf">eq</span> <span class="nv">major-mode</span> <span class="ss">&#39;org-agenda-mode</span><span class="p">)</span>
+      <span class="p">(</span><span class="nb">if</span> <span class="nv">org-agenda-bulk-marked-entries</span>
+	  <span class="p">(</span><span class="nb">setq</span> <span class="nv">counsel-org-tags</span> <span class="no">nil</span><span class="p">)</span>
+	<span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">hdmarker</span> <span class="p">(</span><span class="nb">or</span> <span class="p">(</span><span class="nv">org-get-at-bol</span> <span class="ss">&#39;org-hd-marker</span><span class="p">)</span>
+			    <span class="p">(</span><span class="nv">org-agenda-error</span><span class="p">))))</span>
+	  <span class="p">(</span><span class="nb">with-current-buffer</span> <span class="p">(</span><span class="nf">marker-buffer</span> <span class="nv">hdmarker</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nf">goto-char</span> <span class="nv">hdmarker</span><span class="p">)</span>
+	    <span class="p">(</span><span class="nb">setq</span> <span class="nv">counsel-org-tags</span>
+		  <span class="p">(</span><span class="nv">split-string</span> <span class="p">(</span><span class="nv">org-get-tags-string</span><span class="p">)</span> <span class="s">&#34;:&#34;</span> <span class="no">t</span><span class="p">)))))</span>
+      <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nv">org-at-heading-p</span><span class="p">)</span>
+      <span class="p">(</span><span class="nv">org-back-to-heading</span> <span class="no">t</span><span class="p">))</span>
+      <span class="p">(</span><span class="nb">setq</span> <span class="nv">counsel-org-tags</span> <span class="p">(</span><span class="nv">split-string</span> <span class="p">(</span><span class="nv">org-get-tags-string</span><span class="p">)</span> <span class="s">&#34;:&#34;</span> <span class="no">t</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">let</span> <span class="p">((</span><span class="nv">org-setting-tags</span> <span class="no">t</span><span class="p">)</span>
+	<span class="p">(</span><span class="nv">org-last-tags-completion-table</span>
+	 <span class="p">(</span><span class="nf">append</span> <span class="nv">org-tag-persistent-alist</span>
+		 <span class="p">(</span><span class="nv">org-global-tags-completion-table</span>
+		  <span class="p">(</span><span class="nv">org-agenda-files</span><span class="p">)))))</span>
+      <span class="p">(</span><span class="nv">ivy-read</span> <span class="p">(</span><span class="nv">counsel-org-tag-prompt</span><span class="p">)</span>
+	      <span class="p">(</span><span class="nb">lambda</span> <span class="p">(</span><span class="nv">str</span> <span class="kp">&amp;rest</span> <span class="nv">_unused</span><span class="p">)</span>
+		<span class="p">(</span><span class="nv">delete-dups</span>
+		 <span class="p">(</span><span class="nf">all-completions</span> <span class="nv">str</span> <span class="ss">&#39;org-tags-completion-function</span><span class="p">)))</span>
+	      <span class="nb">:history</span> <span class="ss">&#39;org-tags-history</span>
+	      <span class="nb">:action</span> <span class="ss">&#39;counsel-org-tag-action</span>
+	      <span class="nb">:caller</span> <span class="ss">&#39;counsel-org-tag</span><span class="p">))))</span>
 
-(defun my/set-tags (<span style="color:#66d9ef">&amp;optional</span> v1 v2)
-     (interactive <span style="color:#e6db74">&#34;P&#34;</span>)
-     (counsel-org-tag))
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">my/set-tags</span> <span class="p">(</span><span class="kp">&amp;optional</span> <span class="nv">v1</span> <span class="nv">v2</span><span class="p">)</span>
+     <span class="p">(</span><span class="nb">interactive</span> <span class="s">&#34;P&#34;</span><span class="p">)</span>
+     <span class="p">(</span><span class="nv">counsel-org-tag</span><span class="p">))</span>
 
-(<span style="color:#a6e22e">fset</span> <span style="color:#e6db74">&#39;org-set-tags-command</span> <span style="color:#e6db74">&#39;my/set-tags</span>)
+<span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;org-set-tags-command</span> <span class="ss">&#39;my/set-tags</span><span class="p">)</span>
 
-(provide <span style="color:#e6db74">&#39;org-fix-capture-counsel</span>)
+<span class="p">(</span><span class="nb">provide</span> <span class="ss">&#39;org-fix-capture-counsel</span><span class="p">)</span>
 </code></pre></div>
 
 

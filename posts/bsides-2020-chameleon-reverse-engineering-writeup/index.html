@@ -28,6 +28,9 @@
 Introduction BsidesSF had really really good reverse engineering challenges, but I loved two challenges. One windows reverse challenge called chameleon and another esp32 firmware reverse challenge called smart-locky which I didn&rsquo;t manage to solve in time.
 The challenge Problem statement We are given two files chameleon.exe and flag.png.enc, this looks trivial enough we need to reverse the encryption algorithm to give us the original flag."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -68,7 +71,7 @@ Apr. 9, 2020
 <p>Reading the statment it looked like a simple challenge where you brute force the seed of a default mt19937 implementation, but the problem had only two solves, so I thought there must be some twist.</p>
 <h3 id="first-glance-at-the-binary">First glance at the binary</h3>
 <p>When you first execute the binary it gives you two options, to encrypt or decrypt files.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Usage: chameleon.exe [--encrypt|&lt;--decrypt --id=&lt;id&gt;&gt;] &lt;infile&gt; &lt;outfile&gt;
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text">Usage: chameleon.exe [--encrypt|&lt;--decrypt --id=&lt;id&gt;&gt;] &lt;infile&gt; &lt;outfile&gt;
 
 Example: chameleon.exe --encrypt plaintext.txt ciphertext.txt
 Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
@@ -80,41 +83,41 @@ Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
 </figure>
 
 <p>And here is what the hexrays decompiler gives us after changing some types and variable names:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">void</span> __usercall <span style="color:#a6e22e">encrypt</span>(<span style="color:#66d9ef">const</span> CHAR <span style="color:#f92672">*</span>output<span style="color:#960050;background-color:#1e0010">@</span><span style="color:#f92672">&lt;</span>ebx<span style="color:#f92672">&gt;</span>, <span style="color:#66d9ef">const</span> CHAR <span style="color:#f92672">*</span>input)
-{
-  <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>file_content;
-  BYTE <span style="color:#f92672">*</span>new_file_ptr;
-  FILE <span style="color:#f92672">*</span>v4;
-  DWORD pdwDataLen;
-  HCRYPTKEY phKey;
-  HCRYPTPROV phProv;
-  byte pbData[<span style="color:#ae81ff">20</span>];
-  <span style="color:#66d9ef">char</span> v9[<span style="color:#ae81ff">8</span>];
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">void</span> <span class="n">__usercall</span> <span class="nf">encrypt</span><span class="p">(</span><span class="k">const</span> <span class="n">CHAR</span> <span class="o">*</span><span class="n">output</span><span class="err">@</span><span class="o">&lt;</span><span class="n">ebx</span><span class="o">&gt;</span><span class="p">,</span> <span class="k">const</span> <span class="n">CHAR</span> <span class="o">*</span><span class="n">input</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">void</span> <span class="o">*</span><span class="n">file_content</span><span class="p">;</span>
+  <span class="n">BYTE</span> <span class="o">*</span><span class="n">new_file_ptr</span><span class="p">;</span>
+  <span class="n">FILE</span> <span class="o">*</span><span class="n">v4</span><span class="p">;</span>
+  <span class="n">DWORD</span> <span class="n">pdwDataLen</span><span class="p">;</span>
+  <span class="n">HCRYPTKEY</span> <span class="n">phKey</span><span class="p">;</span>
+  <span class="n">HCRYPTPROV</span> <span class="n">phProv</span><span class="p">;</span>
+  <span class="n">byte</span> <span class="n">pbData</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+  <span class="kt">char</span> <span class="n">v9</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
 
-  file_content <span style="color:#f92672">=</span> read_file(input, <span style="color:#f92672">&amp;</span>pdwDataLen);
-  new_file_ptr <span style="color:#f92672">=</span> (BYTE <span style="color:#f92672">*</span>)realloc(file_content, pdwDataLen <span style="color:#f92672">+</span> <span style="color:#ae81ff">16</span>);
-  <span style="color:#66d9ef">if</span> ( <span style="color:#f92672">!</span>CryptAcquireContextA(<span style="color:#f92672">&amp;</span>phProv, <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#34;Microsoft Enhanced Cryptographic Provider v1.0&#34;</span>, <span style="color:#ae81ff">1u</span>, <span style="color:#ae81ff">0xF0000000</span>) )
-    <span style="color:#66d9ef">goto</span> failure;
-  mersenne_twister((<span style="color:#66d9ef">int</span>)v9);                    <span style="color:#75715e">// generate 8 byte key
-</span><span style="color:#75715e"></span>  <span style="color:#f92672">*</span>(_WORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>pbData[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  pbData[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>;
-  <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>pbData[<span style="color:#ae81ff">8</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>;
-  <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>pbData[<span style="color:#ae81ff">12</span>] <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)v9;
-  <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>pbData[<span style="color:#ae81ff">16</span>] <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>v9[<span style="color:#ae81ff">4</span>];
-  pbData[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;
-  <span style="color:#f92672">*</span>(_DWORD <span style="color:#f92672">*</span>)<span style="color:#f92672">&amp;</span>pbData[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">26113</span>;
-  <span style="color:#66d9ef">if</span> ( <span style="color:#f92672">!</span>CryptImportKey(phProv, pbData, <span style="color:#ae81ff">0x14u</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1u</span>, <span style="color:#f92672">&amp;</span>phKey)
-    <span style="color:#f92672">||</span> <span style="color:#f92672">!</span>CryptEncrypt(phKey, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, new_file_ptr, <span style="color:#f92672">&amp;</span>pdwDataLen, pdwDataLen <span style="color:#f92672">+</span> <span style="color:#ae81ff">8</span>) )
-  {
-failure:
-    v4 <span style="color:#f92672">=</span> _iob_func();
-    fprintf(v4 <span style="color:#f92672">+</span> <span style="color:#ae81ff">2</span>, <span style="color:#e6db74">&#34;Encryption failed</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-    exit(<span style="color:#ae81ff">1</span>);
-  }
-  sub_E51AA0((<span style="color:#66d9ef">int</span>)v9);
-  sub_E51F50(output, new_file_ptr, pdwDataLen);
-  free(new_file_ptr);
-}
+  <span class="n">file_content</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pdwDataLen</span><span class="p">);</span>
+  <span class="n">new_file_ptr</span> <span class="o">=</span> <span class="p">(</span><span class="n">BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">realloc</span><span class="p">(</span><span class="n">file_content</span><span class="p">,</span> <span class="n">pdwDataLen</span> <span class="o">+</span> <span class="mi">16</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">CryptAcquireContextA</span><span class="p">(</span><span class="o">&amp;</span><span class="n">phProv</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;Microsoft Enhanced Cryptographic Provider v1.0&#34;</span><span class="p">,</span> <span class="mi">1u</span><span class="p">,</span> <span class="mh">0xF0000000</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">goto</span> <span class="n">failure</span><span class="p">;</span>
+  <span class="n">mersenne_twister</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">v9</span><span class="p">);</span>                    <span class="c1">// generate 8 byte key
+</span><span class="c1"></span>  <span class="o">*</span><span class="p">(</span><span class="n">_WORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pbData</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pbData</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pbData</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pbData</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="n">v9</span><span class="p">;</span>
+  <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pbData</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v9</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+  <span class="n">pbData</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pbData</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="mi">26113</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">CryptImportKey</span><span class="p">(</span><span class="n">phProv</span><span class="p">,</span> <span class="n">pbData</span><span class="p">,</span> <span class="mh">0x14u</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1u</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">phKey</span><span class="p">)</span>
+    <span class="o">||</span> <span class="o">!</span><span class="n">CryptEncrypt</span><span class="p">(</span><span class="n">phKey</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">new_file_ptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pdwDataLen</span><span class="p">,</span> <span class="n">pdwDataLen</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)</span> <span class="p">)</span>
+  <span class="p">{</span>
+<span class="nl">failure</span><span class="p">:</span>
+    <span class="n">v4</span> <span class="o">=</span> <span class="n">_iob_func</span><span class="p">();</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">v4</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#34;Encryption failed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">sub_E51AA0</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">v9</span><span class="p">);</span>
+  <span class="n">sub_E51F50</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">new_file_ptr</span><span class="p">,</span> <span class="n">pdwDataLen</span><span class="p">);</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">new_file_ptr</span><span class="p">);</span>
+<span class="p">}</span>
 </code></pre></div><p>All right looks simple enough, here are the algorithm steps:</p>
 <ul>
 <li>call to CryptAcquireContextA, this is like an encryption algorithm factory in windows</li>
@@ -125,11 +128,11 @@ failure:
 </ul>
 <p>You can read this <a href="https://docs.microsoft.com/en-us/windows/win32/seccrypto/example-c-program--importing-a-plaintext-key">tutorial</a> to understand how <strong>CryptImportKey</strong> works.</p>
 <p>This is an example key blob from the page above:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">BYTE DesKeyBlob[] <span style="color:#f92672">=</span> {
-    <span style="color:#ae81ff">0x08</span>,<span style="color:#ae81ff">0x02</span>,<span style="color:#ae81ff">0x00</span>,<span style="color:#ae81ff">0x00</span>,<span style="color:#ae81ff">0x01</span>,<span style="color:#ae81ff">0x66</span>,<span style="color:#ae81ff">0x00</span>,<span style="color:#ae81ff">0x00</span>, <span style="color:#75715e">// BLOB header
-</span><span style="color:#75715e"></span>    <span style="color:#ae81ff">0x08</span>,<span style="color:#ae81ff">0x00</span>,<span style="color:#ae81ff">0x00</span>,<span style="color:#ae81ff">0x00</span>,                     <span style="color:#75715e">// key length, in bytes
-</span><span style="color:#75715e"></span>    <span style="color:#ae81ff">0xf1</span>,<span style="color:#ae81ff">0x0e</span>,<span style="color:#ae81ff">0x25</span>,<span style="color:#ae81ff">0x7c</span>,<span style="color:#ae81ff">0x6b</span>,<span style="color:#ae81ff">0xce</span>,<span style="color:#ae81ff">0x0d</span>,<span style="color:#ae81ff">0x34</span>  <span style="color:#75715e">// DES key with parity
-</span><span style="color:#75715e"></span>    };
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="n">BYTE</span> <span class="n">DesKeyBlob</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mh">0x08</span><span class="p">,</span><span class="mh">0x02</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span><span class="mh">0x01</span><span class="p">,</span><span class="mh">0x66</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span> <span class="c1">// BLOB header
+</span><span class="c1"></span>    <span class="mh">0x08</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span><span class="mh">0x00</span><span class="p">,</span>                     <span class="c1">// key length, in bytes
+</span><span class="c1"></span>    <span class="mh">0xf1</span><span class="p">,</span><span class="mh">0x0e</span><span class="p">,</span><span class="mh">0x25</span><span class="p">,</span><span class="mh">0x7c</span><span class="p">,</span><span class="mh">0x6b</span><span class="p">,</span><span class="mh">0xce</span><span class="p">,</span><span class="mh">0x0d</span><span class="p">,</span><span class="mh">0x34</span>  <span class="c1">// DES key with parity
+</span><span class="c1"></span>    <span class="p">};</span>
 </code></pre></div><p>We can see that our example also uses DES using CBC mode of operation, we also see that the DES key is passed as the last 8 bytes (with byte of parity) of the array.</p>
 <p>Ok so the bread and butter of this problem is knowing how the mersenne twister works.</p>
 <h3 id="reversing-mersenne-twister">Reversing mersenne_twister</h3>
@@ -140,31 +143,31 @@ failure:
 
 <p>We can see that there are two loops.</p>
 <p>Here is the decompiled code, it looks really clean after some type changes</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">char</span> __usercall mersenne_twister<span style="color:#960050;background-color:#1e0010">@</span><span style="color:#f92672">&lt;</span>al<span style="color:#f92672">&gt;</span>(<span style="color:#66d9ef">int</span> a1<span style="color:#960050;background-color:#1e0010">@</span><span style="color:#f92672">&lt;</span>edi<span style="color:#f92672">&gt;</span>)
-{
-  <span style="color:#66d9ef">int</span> v1; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">signed</span> <span style="color:#66d9ef">int</span> v2; <span style="color:#75715e">// ecx
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v3; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">char</span> result; <span style="color:#75715e">// al
-</span><span style="color:#75715e"></span>
-  v1 <span style="color:#f92672">=</span> time64(<span style="color:#ae81ff">0</span>);
-  v2 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  <span style="color:#66d9ef">do</span>
-  {
-    v1 <span style="color:#f92672">=</span> <span style="color:#ae81ff">29945647</span> <span style="color:#f92672">*</span> v1 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>;
-    mt[v2<span style="color:#f92672">++</span>] <span style="color:#f92672">=</span> v1;
-  }
-  <span style="color:#66d9ef">while</span> ( v2 <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">351</span> );
-  dword_E54018 <span style="color:#f92672">=</span> v2;
-  v3 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  <span style="color:#66d9ef">do</span>
-  {
-    result <span style="color:#f92672">=</span> getrandom() <span style="color:#f92672">^</span> <span style="color:#ae81ff">0x55</span>;
-    <span style="color:#f92672">*</span>(_BYTE <span style="color:#f92672">*</span>)(v3<span style="color:#f92672">++</span> <span style="color:#f92672">+</span> a1) <span style="color:#f92672">=</span> result;
-  }
-  <span style="color:#66d9ef">while</span> ( v3 <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">8</span> );
-  <span style="color:#66d9ef">return</span> result;
-}
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">char</span> <span class="n">__usercall</span> <span class="n">mersenne_twister</span><span class="err">@</span><span class="o">&lt;</span><span class="n">al</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="err">@</span><span class="o">&lt;</span><span class="n">edi</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">signed</span> <span class="kt">int</span> <span class="n">v2</span><span class="p">;</span> <span class="c1">// ecx
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v3</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">char</span> <span class="n">result</span><span class="p">;</span> <span class="c1">// al
+</span><span class="c1"></span>
+  <span class="n">v1</span> <span class="o">=</span> <span class="n">time64</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="n">v2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">do</span>
+  <span class="p">{</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="mi">29945647</span> <span class="o">*</span> <span class="n">v1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">mt</span><span class="p">[</span><span class="n">v2</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">v1</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">v2</span> <span class="o">&lt;</span> <span class="mi">351</span> <span class="p">);</span>
+  <span class="n">dword_E54018</span> <span class="o">=</span> <span class="n">v2</span><span class="p">;</span>
+  <span class="n">v3</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">do</span>
+  <span class="p">{</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">getrandom</span><span class="p">()</span> <span class="o">^</span> <span class="mh">0x55</span><span class="p">;</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)(</span><span class="n">v3</span><span class="o">++</span> <span class="o">+</span> <span class="n">a1</span><span class="p">)</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">while</span> <span class="p">(</span> <span class="n">v3</span> <span class="o">&lt;</span> <span class="mi">8</span> <span class="p">);</span>
+  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
 </code></pre></div><p>If you implemented mersenne twister, the first loop is the set seed function, this is gonna put numbers in an array I call mt.</p>
 <p>The <strong>critical</strong> part to notice is the call to time64, the twister is seeded with current time.</p>
 <p>Let&rsquo;s reverse getrandom now.</p>
@@ -175,179 +178,179 @@ failure:
 </figure>
 
 <p>The decompiled code looks good enough.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">getrandom</span>()
-{
-  <span style="color:#66d9ef">int</span> v0; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v1; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> <span style="color:#f92672">*</span>v2; <span style="color:#75715e">// ecx
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v3; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v4; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v5; <span style="color:#75715e">// edi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v6; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v7; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v8; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v9; <span style="color:#75715e">// edi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v10; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v11; <span style="color:#75715e">// edi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v12; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v13; <span style="color:#75715e">// eax
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v14; <span style="color:#75715e">// esi
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> v15; <span style="color:#75715e">// ecx
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">int</span> v16; <span style="color:#75715e">// ecx
-</span><span style="color:#75715e"></span>
-  v0 <span style="color:#f92672">=</span> dword_E54018;
-  <span style="color:#66d9ef">if</span> ( dword_E54018 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-  {
-    v1 <span style="color:#f92672">=</span> <span style="color:#ae81ff">175</span>;
-    v2 <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>dword_E54384;
-    <span style="color:#66d9ef">do</span>
-    {
-      v3 <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>v2;
-      v4 <span style="color:#f92672">=</span> v1 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-      <span style="color:#f92672">*</span>(v2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">=</span> ((<span style="color:#f92672">*</span>(v2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> (<span style="color:#f92672">*</span>v2 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>(v2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>)) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> dword_E5437C[v4] <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>((<span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">4</span>) <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(<span style="color:#f92672">*</span>(_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">-</span> <span style="color:#ae81ff">4</span>))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-      <span style="color:#66d9ef">if</span> ( v4 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-      v4 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-      v5 <span style="color:#f92672">=</span> v2[<span style="color:#ae81ff">1</span>];
-      v6 <span style="color:#f92672">=</span> ((v3 <span style="color:#f92672">^</span> (v3 <span style="color:#f92672">^</span> v2[<span style="color:#ae81ff">1</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> mt[v4] <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>(((<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)v3 <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(v3 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">+</span> <span style="color:#ae81ff">4</span>))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-      v7 <span style="color:#f92672">=</span> v4 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-      <span style="color:#f92672">*</span>v2 <span style="color:#f92672">=</span> v6;
-      <span style="color:#66d9ef">if</span> ( v7 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-      v7 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-      v8 <span style="color:#f92672">=</span> v2[<span style="color:#ae81ff">2</span>];
-      v9 <span style="color:#f92672">=</span> ((v5 <span style="color:#f92672">^</span> (v5 <span style="color:#f92672">^</span> v2[<span style="color:#ae81ff">2</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> mt[v7] <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>(((<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)v5 <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(v5 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">+</span> <span style="color:#ae81ff">8</span>))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-      v10 <span style="color:#f92672">=</span> v7 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-      v2[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> v9;
-      <span style="color:#66d9ef">if</span> ( v10 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-      v10 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-      v11 <span style="color:#f92672">=</span> v2[<span style="color:#ae81ff">3</span>];
-      v12 <span style="color:#f92672">=</span> ((v8 <span style="color:#f92672">^</span> (v8 <span style="color:#f92672">^</span> v2[<span style="color:#ae81ff">3</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> mt[v10] <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>(((<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)v8 <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(v8 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">+</span> <span style="color:#ae81ff">12</span>))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-      v13 <span style="color:#f92672">=</span> v10 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-      v2[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> v12;
-      <span style="color:#66d9ef">if</span> ( v13 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-      v13 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-      v14 <span style="color:#f92672">=</span> ((v11 <span style="color:#f92672">^</span> (v11 <span style="color:#f92672">^</span> v2[<span style="color:#ae81ff">4</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> mt[v13] <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>(((<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)v11 <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(v11 <span style="color:#f92672">^</span> <span style="color:#f92672">*</span>((_BYTE <span style="color:#f92672">*</span>)v2 <span style="color:#f92672">+</span> <span style="color:#ae81ff">16</span>))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-      v1 <span style="color:#f92672">=</span> v13 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-      v2[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">=</span> v14;
-      <span style="color:#66d9ef">if</span> ( v1 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">351</span> )
-      v1 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-      v2 <span style="color:#f92672">+=</span> <span style="color:#ae81ff">5</span>;
-    }
-    <span style="color:#66d9ef">while</span> ( (<span style="color:#66d9ef">signed</span> <span style="color:#66d9ef">int</span>)v2 <span style="color:#f92672">&lt;</span> (<span style="color:#66d9ef">signed</span> <span style="color:#66d9ef">int</span>)<span style="color:#f92672">&amp;</span>dword_E548FC );
-    dword_E548F8 <span style="color:#f92672">=</span> dword_E54638 <span style="color:#f92672">^</span> ((dword_E548F8 <span style="color:#f92672">^</span> (dword_E548F8 <span style="color:#f92672">^</span> mt[<span style="color:#ae81ff">0</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x7FFFFu</span>) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> <span style="color:#f92672">-</span>(((<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)dword_E548F8 <span style="color:#f92672">^</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(dword_E548F8 <span style="color:#f92672">^</span> LOBYTE(mt[<span style="color:#ae81ff">0</span>]))) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xE4BD75F5</span>;
-    v0 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  }
-  v15 <span style="color:#f92672">=</span> mt[v0];
-  dword_E54018 <span style="color:#f92672">=</span> v0 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
-  v16 <span style="color:#f92672">=</span> ((((v15 <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">11</span>) <span style="color:#f92672">^</span> v15) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xCABCA5</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">^</span> (v15 <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">11</span>) <span style="color:#f92672">^</span> v15;
-  <span style="color:#66d9ef">return</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">__int8</span>)(v16 <span style="color:#f92672">^</span> ((((v16 <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xFFFFFFAB</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">15</span>) <span style="color:#f92672">^</span> v16) <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">17</span>));
-}
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">getrandom</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">v0</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="o">*</span><span class="n">v2</span><span class="p">;</span> <span class="c1">// ecx
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v3</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v4</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v5</span><span class="p">;</span> <span class="c1">// edi
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v6</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v7</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v8</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v9</span><span class="p">;</span> <span class="c1">// edi
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v10</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v11</span><span class="p">;</span> <span class="c1">// edi
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v12</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v13</span><span class="p">;</span> <span class="c1">// eax
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v14</span><span class="p">;</span> <span class="c1">// esi
+</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v15</span><span class="p">;</span> <span class="c1">// ecx
+</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">v16</span><span class="p">;</span> <span class="c1">// ecx
+</span><span class="c1"></span>
+  <span class="n">v0</span> <span class="o">=</span> <span class="n">dword_E54018</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">dword_E54018</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="mi">175</span><span class="p">;</span>
+    <span class="n">v2</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">dword_E54384</span><span class="p">;</span>
+    <span class="k">do</span>
+    <span class="p">{</span>
+      <span class="n">v3</span> <span class="o">=</span> <span class="o">*</span><span class="n">v2</span><span class="p">;</span>
+      <span class="n">v4</span> <span class="o">=</span> <span class="n">v1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="o">*</span><span class="p">(</span><span class="n">v2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="p">((</span><span class="o">*</span><span class="p">(</span><span class="n">v2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="o">*</span><span class="n">v2</span> <span class="o">^</span> <span class="o">*</span><span class="p">(</span><span class="n">v2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="n">dword_E5437C</span><span class="p">[</span><span class="n">v4</span><span class="p">]</span> <span class="o">^</span> <span class="o">-</span><span class="p">((</span><span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="o">*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">^</span> <span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">v4</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+      <span class="n">v4</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">v5</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+      <span class="n">v6</span> <span class="o">=</span> <span class="p">((</span><span class="n">v3</span> <span class="o">^</span> <span class="p">(</span><span class="n">v3</span> <span class="o">^</span> <span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="n">mt</span><span class="p">[</span><span class="n">v4</span><span class="p">]</span> <span class="o">^</span> <span class="o">-</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">v3</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">v3</span> <span class="o">^</span> <span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">+</span> <span class="mi">4</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+      <span class="n">v7</span> <span class="o">=</span> <span class="n">v4</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="o">*</span><span class="n">v2</span> <span class="o">=</span> <span class="n">v6</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">v7</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+      <span class="n">v7</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">v8</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+      <span class="n">v9</span> <span class="o">=</span> <span class="p">((</span><span class="n">v5</span> <span class="o">^</span> <span class="p">(</span><span class="n">v5</span> <span class="o">^</span> <span class="n">v2</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="n">mt</span><span class="p">[</span><span class="n">v7</span><span class="p">]</span> <span class="o">^</span> <span class="o">-</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">v5</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">v5</span> <span class="o">^</span> <span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+      <span class="n">v10</span> <span class="o">=</span> <span class="n">v7</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v9</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">v10</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+      <span class="n">v10</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">v11</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+      <span class="n">v12</span> <span class="o">=</span> <span class="p">((</span><span class="n">v8</span> <span class="o">^</span> <span class="p">(</span><span class="n">v8</span> <span class="o">^</span> <span class="n">v2</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="n">mt</span><span class="p">[</span><span class="n">v10</span><span class="p">]</span> <span class="o">^</span> <span class="o">-</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">v8</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">v8</span> <span class="o">^</span> <span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">+</span> <span class="mi">12</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+      <span class="n">v13</span> <span class="o">=</span> <span class="n">v10</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">v2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">v12</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">v13</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+      <span class="n">v13</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">v14</span> <span class="o">=</span> <span class="p">((</span><span class="n">v11</span> <span class="o">^</span> <span class="p">(</span><span class="n">v11</span> <span class="o">^</span> <span class="n">v2</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="n">mt</span><span class="p">[</span><span class="n">v13</span><span class="p">]</span> <span class="o">^</span> <span class="o">-</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">v11</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">v11</span> <span class="o">^</span> <span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">+</span> <span class="mi">16</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+      <span class="n">v1</span> <span class="o">=</span> <span class="n">v13</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">v2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">v14</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="mi">351</span> <span class="p">)</span>
+      <span class="n">v1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">v2</span> <span class="o">+=</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">while</span> <span class="p">(</span> <span class="p">(</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="n">v2</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dword_E548FC</span> <span class="p">);</span>
+    <span class="n">dword_E548F8</span> <span class="o">=</span> <span class="n">dword_E54638</span> <span class="o">^</span> <span class="p">((</span><span class="n">dword_E548F8</span> <span class="o">^</span> <span class="p">(</span><span class="n">dword_E548F8</span> <span class="o">^</span> <span class="n">mt</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFu</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="o">-</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)</span><span class="n">dword_E548F8</span> <span class="o">^</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">dword_E548F8</span> <span class="o">^</span> <span class="n">LOBYTE</span><span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xE4BD75F5</span><span class="p">;</span>
+    <span class="n">v0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">v15</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">v0</span><span class="p">];</span>
+  <span class="n">dword_E54018</span> <span class="o">=</span> <span class="n">v0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">v16</span> <span class="o">=</span> <span class="p">((((</span><span class="n">v15</span> <span class="o">&gt;&gt;</span> <span class="mi">11</span><span class="p">)</span> <span class="o">^</span> <span class="n">v15</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xCABCA5</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">v15</span> <span class="o">&gt;&gt;</span> <span class="mi">11</span><span class="p">)</span> <span class="o">^</span> <span class="n">v15</span><span class="p">;</span>
+  <span class="k">return</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kr">__int8</span><span class="p">)(</span><span class="n">v16</span> <span class="o">^</span> <span class="p">((((</span><span class="n">v16</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFFAB</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">^</span> <span class="n">v16</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">17</span><span class="p">));</span>
+<span class="p">}</span>
 </code></pre></div><p>Looks like a normal getrandom function from mt19937 but the thing is, it is not. Because the length of the array is 351, this is called mt11213.</p>
 <p>After looking on the internet for some constants I found this <a href="http://www.ai.mit.edu/courses/6.836-s03/handouts/sierra/random.c">page</a>, maybe we can work with that.</p>
 <p>The only difference with the program was the factor, also I had to change from long to int because this was written for a 32 bit machine (I spent two hours debugging this because I forgot to use -m32 lol 🤦🏽).</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;math.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-<span style="color:#75715e">#define RAND_MASK 0x3FFFFFFF
-</span><span style="color:#75715e"></span>
-<span style="color:#75715e">#define N 351
-</span><span style="color:#75715e">#define M 175
-</span><span style="color:#75715e">#define R 19
-</span><span style="color:#75715e">#define TEMU 11
-</span><span style="color:#75715e">#define TEMS 7
-</span><span style="color:#75715e">#define TEMT 15
-</span><span style="color:#75715e">#define TEML 17
-</span><span style="color:#75715e"></span>
-<span style="color:#75715e">#define MATRIX_A 0xE4BD75F5
-</span><span style="color:#75715e">#define TEMB     0x655E5280
-</span><span style="color:#75715e">#define TEMC     0xFFD58000
-</span><span style="color:#75715e"></span>
-<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> mt[N];
-<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> mti<span style="color:#f92672">=</span>N;
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;math.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#define RAND_MASK 0x3FFFFFFF
+</span><span class="cp"></span>
+<span class="cp">#define N 351
+</span><span class="cp">#define M 175
+</span><span class="cp">#define R 19
+</span><span class="cp">#define TEMU 11
+</span><span class="cp">#define TEMS 7
+</span><span class="cp">#define TEMT 15
+</span><span class="cp">#define TEML 17
+</span><span class="cp"></span>
+<span class="cp">#define MATRIX_A 0xE4BD75F5
+</span><span class="cp">#define TEMB     0x655E5280
+</span><span class="cp">#define TEMC     0xFFD58000
+</span><span class="cp"></span>
+<span class="k">static</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">mt</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">mti</span><span class="o">=</span><span class="n">N</span><span class="p">;</span>
 
 
-<span style="color:#66d9ef">extern</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">set_seed</span> (<span style="color:#66d9ef">int</span> seed) {
-  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> s <span style="color:#f92672">=</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span>)seed;
-  <span style="color:#66d9ef">for</span> (mti<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>; mti<span style="color:#f92672">&lt;</span>N; mti<span style="color:#f92672">++</span>) {
-    <span style="color:#75715e">// s = s * 29943829 - 1;
-</span><span style="color:#75715e"></span>    s <span style="color:#f92672">=</span> s <span style="color:#f92672">*</span>  <span style="color:#ae81ff">29945647</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>;
-    mt[mti] <span style="color:#f92672">=</span> s;
-  }
-  <span style="color:#66d9ef">return</span>;
-}
+<span class="k">extern</span> <span class="kt">void</span> <span class="nf">set_seed</span> <span class="p">(</span><span class="kt">int</span> <span class="n">seed</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span><span class="n">seed</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">mti</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">mti</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="n">mti</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// s = s * 29943829 - 1;
+</span><span class="c1"></span>    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span>  <span class="mi">29945647</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">mt</span><span class="p">[</span><span class="n">mti</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
 
-<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">dump</span>() {
-    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>) {
-       printf(<span style="color:#e6db74">&#34;%x</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, mt[i]);
-    }
-}
+<span class="kt">void</span> <span class="nf">dump</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+       <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%x</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">mt</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 
-<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">genrandom</span> () {
-  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> y;
-  <span style="color:#66d9ef">if</span> (mti <span style="color:#f92672">&gt;=</span> N) {
-    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> LOWER_MASK <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1u</span> <span style="color:#f92672">&lt;&lt;</span> R) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>;
-    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> UPPER_MASK <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> R;
-    <span style="color:#66d9ef">int</span> kk, km;
-    <span style="color:#66d9ef">for</span> (kk<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, km<span style="color:#f92672">=</span>M; kk <span style="color:#f92672">&lt;</span> N<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>; kk<span style="color:#f92672">++</span>) {
-      y <span style="color:#f92672">=</span> (mt[kk] <span style="color:#f92672">&amp;</span> UPPER_MASK) <span style="color:#f92672">|</span> (mt[kk<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">&amp;</span> LOWER_MASK);
-      mt[kk] <span style="color:#f92672">=</span> mt[km] <span style="color:#f92672">^</span> (y <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> (<span style="color:#f92672">-</span>(y <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> MATRIX_A);
+<span class="kt">int</span> <span class="nf">genrandom</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mti</span> <span class="o">&gt;=</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">LOWER_MASK</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1u</span> <span class="o">&lt;&lt;</span> <span class="n">R</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">UPPER_MASK</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">R</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">kk</span><span class="p">,</span> <span class="n">km</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">kk</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">km</span><span class="o">=</span><span class="n">M</span><span class="p">;</span> <span class="n">kk</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">kk</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">UPPER_MASK</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">kk</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">LOWER_MASK</span><span class="p">);</span>
+      <span class="n">mt</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">km</span><span class="p">]</span> <span class="o">^</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">y</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MATRIX_A</span><span class="p">);</span>
 
-      <span style="color:#66d9ef">if</span> (<span style="color:#f92672">++</span>km <span style="color:#f92672">&gt;=</span> N) km <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-    }
-    y <span style="color:#f92672">=</span> (mt[N<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">&amp;</span> UPPER_MASK) <span style="color:#f92672">|</span> (mt[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&amp;</span> LOWER_MASK);
-    mt[N<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> mt[M<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">^</span> (y <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">^</span> (<span style="color:#f92672">-</span>(<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span>)(y <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">&amp;</span> MATRIX_A);
-    mti <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  }
-  y <span style="color:#f92672">=</span> mt[mti<span style="color:#f92672">++</span>];
-  y <span style="color:#f92672">^=</span>  y <span style="color:#f92672">&gt;&gt;</span> TEMU;
-  y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> TEMS) <span style="color:#f92672">&amp;</span> TEMB;
-  y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> TEMT) <span style="color:#f92672">&amp;</span> TEMC;
-  y <span style="color:#f92672">^=</span>  y <span style="color:#f92672">&gt;&gt;</span> TEML;
+      <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">km</span> <span class="o">&gt;=</span> <span class="n">N</span><span class="p">)</span> <span class="n">km</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">UPPER_MASK</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">mt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">LOWER_MASK</span><span class="p">);</span>
+    <span class="n">mt</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">^</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)(</span><span class="n">y</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MATRIX_A</span><span class="p">);</span>
+    <span class="n">mti</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">y</span> <span class="o">=</span> <span class="n">mt</span><span class="p">[</span><span class="n">mti</span><span class="o">++</span><span class="p">];</span>
+  <span class="n">y</span> <span class="o">^=</span>  <span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="n">TEMU</span><span class="p">;</span>
+  <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">TEMS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">TEMB</span><span class="p">;</span>
+  <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">TEMT</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">TEMC</span><span class="p">;</span>
+  <span class="n">y</span> <span class="o">^=</span>  <span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="n">TEML</span><span class="p">;</span>
 
-  <span style="color:#66d9ef">return</span> y<span style="color:#f92672">&amp;</span><span style="color:#ae81ff">0xff</span>;
-}
+  <span class="k">return</span> <span class="n">y</span><span class="o">&amp;</span><span class="mh">0xff</span><span class="p">;</span>
+<span class="p">}</span>
 
-<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">void</span>) {
-    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> t <span style="color:#f92672">=</span> <span style="color:#ae81ff">1569888000</span> <span style="color:#75715e">/*1546300800*/</span>; t <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">1582583270</span>; t<span style="color:#f92672">++</span>) {
-      set_seed(t);
-      <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">8</span>; i<span style="color:#f92672">++</span>) {
-	  printf(<span style="color:#e6db74">&#34;%x&#34;</span>, genrandom() <span style="color:#f92672">^</span> <span style="color:#ae81ff">0x55</span>);
-      }
-      printf(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-    }
-}
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">1569888000</span> <span class="cm">/*1546300800*/</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">1582583270</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">set_seed</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+	  <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%x&#34;</span><span class="p">,</span> <span class="n">genrandom</span><span class="p">()</span> <span class="o">^</span> <span class="mh">0x55</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&#34;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div><p>This generates a 263 MiB file:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">gcc  bruteforce.c <span style="color:#f92672">&amp;&amp;</span> ./a.out &gt; keys.txt
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gcc  bruteforce.c <span class="o">&amp;&amp;</span> ./a.out &gt; keys.txt
 </code></pre></div><p>Then I wrote a little program in python to try to brute force the key, since we know that the file is png, and the first 8 bytes are fixed.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> DES
-cipher <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;cd0c8716e99ae841&#34;</span><span style="color:#f92672">.</span>decode(<span style="color:#e6db74">&#34;hex&#34;</span>)
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">DES</span>
+<span class="n">cipher</span> <span class="o">=</span> <span class="s2">&#34;cd0c8716e99ae841&#34;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&#34;hex&#34;</span><span class="p">)</span>
 
-<span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;keys.txt&#34;</span>) <span style="color:#66d9ef">as</span> myfile:
-    lines <span style="color:#f92672">=</span> myfile<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>splitlines()
-    p <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.01</span>
-    pas <span style="color:#f92672">=</span> p
-    l <span style="color:#f92672">=</span> float(len(lines))
-<span style="color:#66d9ef">for</span> i, key <span style="color:#f92672">in</span> enumerate(lines):
-    <span style="color:#66d9ef">if</span> i <span style="color:#f92672">/</span> l <span style="color:#f92672">&gt;=</span> p:
-      <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#34;{}%&#34;</span><span style="color:#f92672">.</span>format(p <span style="color:#f92672">*</span> <span style="color:#ae81ff">100</span>))
-      p <span style="color:#f92672">+=</span> pas
-      keyh <span style="color:#f92672">=</span> key
-      key <span style="color:#f92672">=</span> key<span style="color:#f92672">.</span>zfill(<span style="color:#ae81ff">16</span>)<span style="color:#f92672">.</span>decode(<span style="color:#e6db74">&#34;hex&#34;</span>)
-      out <span style="color:#f92672">=</span> DES<span style="color:#f92672">.</span>new(key)<span style="color:#f92672">.</span>decrypt(cipher)
-    <span style="color:#66d9ef">if</span> out[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x89</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x50</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x4e</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x47</span>) <span style="color:#f92672">and</span> \
-       out[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x0d</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">5</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0xa</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">6</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x1a</span>) <span style="color:#f92672">and</span> out[<span style="color:#ae81ff">7</span>] <span style="color:#f92672">==</span> chr(<span style="color:#ae81ff">0x0a</span>):
-      <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#34;FOUND .....&#34;</span>)
-      <span style="color:#66d9ef">print</span>(keyh)
-      exit(<span style="color:#ae81ff">0</span>)
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&#34;keys.txt&#34;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">myfile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">pas</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">/</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="n">p</span><span class="p">:</span>
+      <span class="k">print</span><span class="p">(</span><span class="s2">&#34;{}%&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+      <span class="n">p</span> <span class="o">+=</span> <span class="n">pas</span>
+      <span class="n">keyh</span> <span class="o">=</span> <span class="n">key</span>
+      <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&#34;hex&#34;</span><span class="p">)</span>
+      <span class="n">out</span> <span class="o">=</span> <span class="n">DES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">cipher</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x89</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span> <span class="ow">and</span> \
+       <span class="n">out</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x0d</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x0a</span><span class="p">):</span>
+      <span class="k">print</span><span class="p">(</span><span class="s2">&#34;FOUND .....&#34;</span><span class="p">)</span>
+      <span class="k">print</span><span class="p">(</span><span class="n">keyh</span><span class="p">)</span>
+      <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </code></pre></div><p>After 5 minutes I find the key, and I decrypt the image:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> DES
-key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;a051b8a16f8542da&#34;</span><span style="color:#f92672">.</span>decode(<span style="color:#e6db74">&#34;hex&#34;</span>)
-<span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;flag.png.enc&#34;</span>) <span style="color:#66d9ef">as</span> myfile:
-    image<span style="color:#f92672">=</span>  myfile<span style="color:#f92672">.</span>read()
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">DES</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s2">&#34;a051b8a16f8542da&#34;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&#34;hex&#34;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&#34;flag.png.enc&#34;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+    <span class="n">image</span><span class="o">=</span>  <span class="n">myfile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-content <span style="color:#f92672">=</span> DES<span style="color:#f92672">.</span>new(key, DES<span style="color:#f92672">.</span>MODE_CBC, IV<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x00</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">8</span>)<span style="color:#f92672">.</span>decrypt(image)
+<span class="n">content</span> <span class="o">=</span> <span class="n">DES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">DES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">IV</span><span class="o">=</span><span class="s2">&#34;</span><span class="se">\x00</span><span class="s2">&#34;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
-<span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;flag.png&#34;</span>, <span style="color:#e6db74">&#34;w&#34;</span>) <span style="color:#66d9ef">as</span> myfile:
-    myfile<span style="color:#f92672">.</span>write(content)
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&#34;flag.png&#34;</span><span class="p">,</span> <span class="s2">&#34;w&#34;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+    <span class="n">myfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </code></pre></div><p>And yaas! We have the flag!</p>
 <figure>
     <img src="/bsides/flag-md.png"/> 

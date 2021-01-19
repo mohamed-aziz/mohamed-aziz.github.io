@@ -29,6 +29,9 @@ So I have my music collection in my laptop hard drive, I wanna be able to play a
 For changing the current track, I use Emacs with emms and mpv, I don&rsquo;t have the need to use mpd to control to my music, I can just mosh to my machine and use emacsclient.
 But how to hear the music? For me I use a solution based on pulseaudio and ffmpeg, it&rsquo;s a hack but it works for now."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -70,14 +73,14 @@ Mar. 1, 2019
 </ul>
 <h2 id="sender-part">Sender part</h2>
 <p>So first I create a null sink called remote:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pactl load-module module-null-sink sink_name<span style="color:#f92672">=</span>remote
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">pactl load-module module-null-sink <span class="nv">sink_name</span><span class="o">=</span>remote
 </code></pre></div><p>Then I stream audio using mp3lame codec to the other computer (btw data is pcm_s16le so if you want to transmit that good luck but that will need a lot of bandwidth)</p>
 <p>(I don&rsquo;t have firewalls so this is easy)</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ffmpeg -f pulse -i <span style="color:#e6db74">&#34;remote.monitor&#34;</span> -acodec libmp3lame -ab 128k -ac <span style="color:#ae81ff">2</span> -f mp3 <span style="color:#e6db74">&#34;udp://10.1.1.2:1337&#34;</span>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">ffmpeg -f pulse -i <span class="s2">&#34;remote.monitor&#34;</span> -acodec libmp3lame -ab 128k -ac <span class="m">2</span> -f mp3 <span class="s2">&#34;udp://10.1.1.2:1337&#34;</span>
 </code></pre></div><p>Then I change the output mpv to the new sink.</p>
 <h2 id="receiver-part">Receiver part</h2>
 <p>I just play the stuff using ffplay</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ffplay -nodisp -ac <span style="color:#ae81ff">2</span> -bufsize 3000k -ab 128k -acodec mp3 -f mp3 -i <span style="color:#e6db74">&#34;udp://localhost:1337&#34;</span>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">ffplay -nodisp -ac <span class="m">2</span> -bufsize 3000k -ab 128k -acodec mp3 -f mp3 -i <span class="s2">&#34;udp://localhost:1337&#34;</span>
 </code></pre></div>
 
 

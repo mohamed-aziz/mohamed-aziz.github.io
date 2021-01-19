@@ -27,6 +27,9 @@
 <meta name="twitter:description" content="Challenge 17 Attacking CBC with a padding attack was fascinating, here is my solution
 from set2 import aes_cbc_decrypt, aes_cbc_encrypt, paddpkcs7, validatepkcs7, split_blocks from Crypto import Random from Crypto.Util.strxor import strxor def get_block(text, block, blocksize): return split_blocks(text, blocksize)[block] def produce_ciphertext(plaintext, key): blocksize = len(key) iv = Random.new().read(blocksize) return iv &#43; aes_cbc_encrypt(paddpkcs7(plaintext, blocksize), key, iv) def cbc_padding_oracle(ciphertext, key): blocksize = len(key) iv = ciphertext[:blocksize] return validatepkcs7(aes_cbc_decrypt(ciphertext[blocksize:], key, iv)) def break_cbc_padding_oracle(oracle, ciphertext, blocksize=16): plaintext_block = &#34;&#34; plaintext = &#34;&#34; prefix = &#34;&#34; for block_counter in range(1, len(split_blocks(ciphertext, blocksize))): current_block = get_block(ciphertext, block_counter, blocksize) last_block = get_block(ciphertext, block_counter-1, blocksize) for j in range(blocksize-1, -1, -1): for i in range(255)[::-1]: guessed_block = strxor(last_block, (&#34;\x00&#34; * j) &#43; chr(i) &#43; strxor(plaintext_block, (chr((blocksize - j)))*len(plaintext_block))) if oracle(prefix &#43; guessed_block &#43; current_block): plaintext_block = chr(i ^ (blocksize - j)) &#43; plaintext_block break plaintext &#43;= plaintext_block plaintext_block = &#34;&#34; prefix &#43;= last_block return plaintext Challenge 18 In this challenge, you implement CTR mode which turns a block cipher into a stream cipher."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -59,318 +62,318 @@ Jun. 17, 2019
 <br/><br/>
 <h2 id="challenge-17">Challenge 17</h2>
 <p>Attacking CBC with a padding attack was fascinating, here is my solution</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> set2 <span style="color:#f92672">import</span> aes_cbc_decrypt, aes_cbc_encrypt, paddpkcs7, validatepkcs7, split_blocks
-<span style="color:#f92672">from</span> Crypto <span style="color:#f92672">import</span> Random
-<span style="color:#f92672">from</span> Crypto.Util.strxor <span style="color:#f92672">import</span> strxor
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">set2</span> <span class="kn">import</span> <span class="n">aes_cbc_decrypt</span><span class="p">,</span> <span class="n">aes_cbc_encrypt</span><span class="p">,</span> <span class="n">paddpkcs7</span><span class="p">,</span> <span class="n">validatepkcs7</span><span class="p">,</span> <span class="n">split_blocks</span>
+<span class="kn">from</span> <span class="nn">Crypto</span> <span class="kn">import</span> <span class="n">Random</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.strxor</span> <span class="kn">import</span> <span class="n">strxor</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_block</span>(text, block, blocksize):
-    <span style="color:#66d9ef">return</span> split_blocks(text, blocksize)[block]
+<span class="k">def</span> <span class="nf">get_block</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">split_blocks</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">)[</span><span class="n">block</span><span class="p">]</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">produce_ciphertext</span>(plaintext, key):
-    blocksize <span style="color:#f92672">=</span> len(key)
-    iv <span style="color:#f92672">=</span> Random<span style="color:#f92672">.</span>new()<span style="color:#f92672">.</span>read(blocksize)
-    <span style="color:#66d9ef">return</span> iv <span style="color:#f92672">+</span> aes_cbc_encrypt(paddpkcs7(plaintext, blocksize), key, iv)
+<span class="k">def</span> <span class="nf">produce_ciphertext</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="n">blocksize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">iv</span> <span class="o">=</span> <span class="n">Random</span><span class="o">.</span><span class="n">new</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">blocksize</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">iv</span> <span class="o">+</span> <span class="n">aes_cbc_encrypt</span><span class="p">(</span><span class="n">paddpkcs7</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">),</span> <span class="n">key</span><span class="p">,</span> <span class="n">iv</span><span class="p">)</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">cbc_padding_oracle</span>(ciphertext, key):
-    blocksize <span style="color:#f92672">=</span> len(key)
-    iv <span style="color:#f92672">=</span> ciphertext[:blocksize]
-    <span style="color:#66d9ef">return</span> validatepkcs7(aes_cbc_decrypt(ciphertext[blocksize:], key, iv))
+<span class="k">def</span> <span class="nf">cbc_padding_oracle</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="n">blocksize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">iv</span> <span class="o">=</span> <span class="n">ciphertext</span><span class="p">[:</span><span class="n">blocksize</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">validatepkcs7</span><span class="p">(</span><span class="n">aes_cbc_decrypt</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">[</span><span class="n">blocksize</span><span class="p">:],</span> <span class="n">key</span><span class="p">,</span> <span class="n">iv</span><span class="p">))</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">break_cbc_padding_oracle</span>(oracle, ciphertext, blocksize<span style="color:#f92672">=</span><span style="color:#ae81ff">16</span>):
-    plaintext_block <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-    plaintext <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-    prefix <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-    <span style="color:#66d9ef">for</span> block_counter <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>, len(split_blocks(ciphertext, blocksize))):
-      current_block <span style="color:#f92672">=</span> get_block(ciphertext, block_counter, blocksize)
-      last_block <span style="color:#f92672">=</span> get_block(ciphertext, block_counter<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, blocksize)
-      <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(blocksize<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>):
-	  <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">255</span>)[::<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]:
-	      guessed_block <span style="color:#f92672">=</span> strxor(last_block,
-				     (<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x00</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">*</span> j) <span style="color:#f92672">+</span> chr(i) <span style="color:#f92672">+</span> strxor(plaintext_block, (chr((blocksize <span style="color:#f92672">-</span> j)))<span style="color:#f92672">*</span>len(plaintext_block)))
-	      <span style="color:#66d9ef">if</span> oracle(prefix <span style="color:#f92672">+</span> guessed_block <span style="color:#f92672">+</span> current_block):
-		  plaintext_block <span style="color:#f92672">=</span> chr(i <span style="color:#f92672">^</span> (blocksize <span style="color:#f92672">-</span> j)) <span style="color:#f92672">+</span> plaintext_block
-		  <span style="color:#66d9ef">break</span>
-      plaintext <span style="color:#f92672">+=</span> plaintext_block
-      plaintext_block <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-      prefix <span style="color:#f92672">+=</span> last_block
-    <span style="color:#66d9ef">return</span> plaintext
+<span class="k">def</span> <span class="nf">break_cbc_padding_oracle</span><span class="p">(</span><span class="n">oracle</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">,</span> <span class="n">blocksize</span><span class="o">=</span><span class="mi">16</span><span class="p">):</span>
+    <span class="n">plaintext_block</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+    <span class="n">plaintext</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+    <span class="k">for</span> <span class="n">block_counter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_blocks</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">))):</span>
+      <span class="n">current_block</span> <span class="o">=</span> <span class="n">get_block</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">block_counter</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">)</span>
+      <span class="n">last_block</span> <span class="o">=</span> <span class="n">get_block</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">block_counter</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">blocksize</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+	  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">255</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+	      <span class="n">guessed_block</span> <span class="o">=</span> <span class="n">strxor</span><span class="p">(</span><span class="n">last_block</span><span class="p">,</span>
+				     <span class="p">(</span><span class="s2">&#34;</span><span class="se">\x00</span><span class="s2">&#34;</span> <span class="o">*</span> <span class="n">j</span><span class="p">)</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="n">strxor</span><span class="p">(</span><span class="n">plaintext_block</span><span class="p">,</span> <span class="p">(</span><span class="nb">chr</span><span class="p">((</span><span class="n">blocksize</span> <span class="o">-</span> <span class="n">j</span><span class="p">)))</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">plaintext_block</span><span class="p">)))</span>
+	      <span class="k">if</span> <span class="n">oracle</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">guessed_block</span> <span class="o">+</span> <span class="n">current_block</span><span class="p">):</span>
+		  <span class="n">plaintext_block</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">i</span> <span class="o">^</span> <span class="p">(</span><span class="n">blocksize</span> <span class="o">-</span> <span class="n">j</span><span class="p">))</span> <span class="o">+</span> <span class="n">plaintext_block</span>
+		  <span class="k">break</span>
+      <span class="n">plaintext</span> <span class="o">+=</span> <span class="n">plaintext_block</span>
+      <span class="n">plaintext_block</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+      <span class="n">prefix</span> <span class="o">+=</span> <span class="n">last_block</span>
+    <span class="k">return</span> <span class="n">plaintext</span>
 </code></pre></div><h2 id="challenge-18">Challenge 18</h2>
 <p>In this challenge, you implement CTR mode which turns a block cipher into a stream cipher.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> set2 <span style="color:#f92672">import</span> aes_ecb_encrypt
-<span style="color:#f92672">import</span> struct
-<span style="color:#f92672">from</span> Crypto.Util.strxor <span style="color:#f92672">import</span> strxor
-<span style="color:#f92672">from</span> set2 <span style="color:#f92672">import</span> split_blocks
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">set2</span> <span class="kn">import</span> <span class="n">aes_ecb_encrypt</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.strxor</span> <span class="kn">import</span> <span class="n">strxor</span>
+<span class="kn">from</span> <span class="nn">set2</span> <span class="kn">import</span> <span class="n">split_blocks</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">form_nonce</span>(nonce):
-    <span style="color:#66d9ef">return</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&lt;Q&#34;</span>, nonce)
+<span class="k">def</span> <span class="nf">form_nonce</span><span class="p">(</span><span class="n">nonce</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&#34;&lt;Q&#34;</span><span class="p">,</span> <span class="n">nonce</span><span class="p">)</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">aes_ctr_produce_blocks</span>(nonce):
-    <span style="color:#75715e"># xrange doesn&#39;t support 64 bit numbers</span>
-    <span style="color:#66d9ef">for</span> counter <span style="color:#f92672">in</span> xrange(<span style="color:#ae81ff">2</span><span style="color:#f92672">**</span><span style="color:#ae81ff">32</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>):
-      <span style="color:#66d9ef">yield</span> nonce <span style="color:#f92672">+</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&lt;Q&#34;</span>, counter)
+<span class="k">def</span> <span class="nf">aes_ctr_produce_blocks</span><span class="p">(</span><span class="n">nonce</span><span class="p">):</span>
+    <span class="c1"># xrange doesn&#39;t support 64 bit numbers</span>
+    <span class="k">for</span> <span class="n">counter</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+      <span class="k">yield</span> <span class="n">nonce</span> <span class="o">+</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&#34;&lt;Q&#34;</span><span class="p">,</span> <span class="n">counter</span><span class="p">)</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">aes_ctr_encrypt_block</span>(block, key):
-    <span style="color:#66d9ef">return</span> aes_ecb_encrypt(block, key)
+<span class="k">def</span> <span class="nf">aes_ctr_encrypt_block</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">aes_ecb_encrypt</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">aes_ctr_encrypt_decrypt</span>(text, key, nonce):
-    blocksize <span style="color:#f92672">=</span> len(key)
-    ctr_block_gen <span style="color:#f92672">=</span> aes_ctr_produce_blocks(nonce)
-    output <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-    <span style="color:#66d9ef">for</span> block <span style="color:#f92672">in</span> split_blocks(text, blocksize):
-      blk <span style="color:#f92672">=</span> next(ctr_block_gen)
-      blk <span style="color:#f92672">=</span> aes_ctr_encrypt_block(blk, key)
-      blk <span style="color:#f92672">=</span> blk[:len(block)]
-      output <span style="color:#f92672">+=</span> strxor(blk, block)
+<span class="k">def</span> <span class="nf">aes_ctr_encrypt_decrypt</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">nonce</span><span class="p">):</span>
+    <span class="n">blocksize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">ctr_block_gen</span> <span class="o">=</span> <span class="n">aes_ctr_produce_blocks</span><span class="p">(</span><span class="n">nonce</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">split_blocks</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">):</span>
+      <span class="n">blk</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">ctr_block_gen</span><span class="p">)</span>
+      <span class="n">blk</span> <span class="o">=</span> <span class="n">aes_ctr_encrypt_block</span><span class="p">(</span><span class="n">blk</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+      <span class="n">blk</span> <span class="o">=</span> <span class="n">blk</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="p">)]</span>
+      <span class="n">output</span> <span class="o">+=</span> <span class="n">strxor</span><span class="p">(</span><span class="n">blk</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
 
-    <span style="color:#66d9ef">return</span> output
+    <span class="k">return</span> <span class="n">output</span>
 </code></pre></div><h2 id="challenge-19">Challenge 19</h2>
 <p>This is still unimplemented</p>
 <h2 id="challenge-20">Challenge 20</h2>
 <p>This is still unimplemented</p>
 <h2 id="challenge-21">Challenge 21</h2>
 <p>In this challenge, I implemented the mersenne twister</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MT19937</span>(object):
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="k">class</span> <span class="nc">MT19937</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    W, N, M, R <span style="color:#f92672">=</span> <span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">624</span>, <span style="color:#ae81ff">397</span>, <span style="color:#ae81ff">31</span>
-    A <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x9908B0DF</span>
-    U, D <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">0xFFFFFFFF</span>
-    S, B <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">0x9D2C5680</span>
-    T, C <span style="color:#f92672">=</span> <span style="color:#ae81ff">15</span>, <span style="color:#ae81ff">0xEFC60000</span>
-    L <span style="color:#f92672">=</span> <span style="color:#ae81ff">18</span>
-    F <span style="color:#f92672">=</span> <span style="color:#ae81ff">1812433253</span>
-    LOWER_MASK <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> R) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
-    UPPER_MASK <span style="color:#f92672">=</span> (<span style="color:#f92672">~</span>LOWER_MASK) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffffffff</span>
+    <span class="n">W</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">624</span><span class="p">,</span> <span class="mi">397</span><span class="p">,</span> <span class="mi">31</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mh">0x9908B0DF</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="mh">0xFFFFFFFF</span>
+    <span class="n">S</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span> <span class="mh">0x9D2C5680</span>
+    <span class="n">T</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="mh">0xEFC60000</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="mi">18</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="mi">1812433253</span>
+    <span class="n">LOWER_MASK</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">R</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">UPPER_MASK</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">LOWER_MASK</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
 
-    <span style="color:#66d9ef">def</span> __init__(self, seed):
-      self<span style="color:#f92672">.</span>mt <span style="color:#f92672">=</span> []
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">mt</span> <span class="o">=</span> <span class="p">[]</span>
 
-      self<span style="color:#f92672">.</span>mt<span style="color:#f92672">.</span>append(seed)
-      <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>, self<span style="color:#f92672">.</span>N):
-	  self<span style="color:#f92672">.</span>mt<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>F <span style="color:#f92672">*</span> (self<span style="color:#f92672">.</span>mt[i <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">^</span> (self<span style="color:#f92672">.</span>mt[i <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">&gt;&gt;</span> (self<span style="color:#f92672">.</span>W <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>))) <span style="color:#f92672">+</span> i<span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffffffff</span>)
-      self<span style="color:#f92672">.</span>index <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>N
+      <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>
+	  <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">^</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">+</span> <span class="n">i</span><span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
 
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">extract_number</span>(self):
-      <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>index <span style="color:#f92672">==</span> self<span style="color:#f92672">.</span>N:
-	  self<span style="color:#f92672">.</span>twist()
+    <span class="k">def</span> <span class="nf">extract_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">:</span>
+	  <span class="bp">self</span><span class="o">.</span><span class="n">twist</span><span class="p">()</span>
 
-      y <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>mt[self<span style="color:#f92672">.</span>index]
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&gt;&gt;</span> self<span style="color:#f92672">.</span>U) <span style="color:#f92672">&amp;</span> self<span style="color:#f92672">.</span>D
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> self<span style="color:#f92672">.</span>S) <span style="color:#f92672">&amp;</span> self<span style="color:#f92672">.</span>B
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> self<span style="color:#f92672">.</span>T) <span style="color:#f92672">&amp;</span> self<span style="color:#f92672">.</span>C
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&gt;&gt;</span> self<span style="color:#f92672">.</span>L)
+      <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">U</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
 
-      self<span style="color:#f92672">.</span>index <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
-      <span style="color:#66d9ef">return</span> y <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffffffff</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">return</span> <span class="n">y</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span>
 
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">twist</span>(self):
-      <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(self<span style="color:#f92672">.</span>N):
-	  x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>mt[i] <span style="color:#f92672">&amp;</span> self<span style="color:#f92672">.</span>UPPER_MASK) <span style="color:#f92672">+</span> (self<span style="color:#f92672">.</span>mt[(i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>N] <span style="color:#f92672">&amp;</span> self<span style="color:#f92672">.</span>LOWER_MASK)
-	  xA <span style="color:#f92672">=</span> x <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">1</span>
-	  <span style="color:#66d9ef">if</span> x <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>:
-	      xA <span style="color:#f92672">^=</span> self<span style="color:#f92672">.</span>A
+    <span class="k">def</span> <span class="nf">twist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>
+	  <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">UPPER_MASK</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">]</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">LOWER_MASK</span><span class="p">)</span>
+	  <span class="n">xA</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+	  <span class="k">if</span> <span class="n">x</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+	      <span class="n">xA</span> <span class="o">^=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span>
 
-	  self<span style="color:#f92672">.</span>mt[i] <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>mt[(i <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>M) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>N] <span style="color:#f92672">^</span> xA
+	  <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">]</span> <span class="o">^</span> <span class="n">xA</span>
 
-      self<span style="color:#f92672">.</span>index <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
 </code></pre></div><h2 id="challenge-22">Challenge 22</h2>
 <p>This challenge teaches why you shouldn&rsquo;t see your MT19937 with curent time</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> set3 <span style="color:#f92672">import</span> MT19937
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">set3</span> <span class="kn">import</span> <span class="n">MT19937</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">break_mt19937_seeded_time</span>(timestamp, num, lim<span style="color:#f92672">=</span><span style="color:#ae81ff">1000</span>):
-    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(timestamp<span style="color:#f92672">-</span>lim, timestamp):
-      obj <span style="color:#f92672">=</span> MT19937(i)
-      num2 <span style="color:#f92672">=</span> obj<span style="color:#f92672">.</span>extract_number()
-      <span style="color:#66d9ef">if</span> num2 <span style="color:#f92672">==</span> num:
-	  <span style="color:#66d9ef">return</span> i
-    <span style="color:#66d9ef">return</span> None
+<span class="k">def</span> <span class="nf">break_mt19937_seeded_time</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">lim</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">timestamp</span><span class="o">-</span><span class="n">lim</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+      <span class="n">num2</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">extract_number</span><span class="p">()</span>
+      <span class="k">if</span> <span class="n">num2</span> <span class="o">==</span> <span class="n">num</span><span class="p">:</span>
+	  <span class="k">return</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="bp">None</span>
 </code></pre></div><h2 id="challenge-23">Challenge 23</h2>
 <p>Given enough consecutive outputs, you can clone the mersenne twister, 624 in the case of MT19937:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> set3 <span style="color:#f92672">import</span> MT19937
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">set3</span> <span class="kn">import</span> <span class="n">MT19937</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">clone_mt19937</span>(numbers):
-    T, C <span style="color:#f92672">=</span> <span style="color:#ae81ff">15</span>, <span style="color:#ae81ff">0xEFC60000</span>
-    L <span style="color:#f92672">=</span> <span style="color:#ae81ff">18</span>
-    U, D <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">0xFFFFFFFF</span>
-    S, B <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">0x9D2C5680</span>
-    mt <span style="color:#f92672">=</span> []
-    <span style="color:#66d9ef">for</span> number <span style="color:#f92672">in</span> numbers:
-      y <span style="color:#f92672">=</span> number
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&gt;&gt;</span> L)
-      y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> T) <span style="color:#f92672">&amp;</span> C
-      <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(S):
-	  y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&lt;&lt;</span> S) <span style="color:#f92672">&amp;</span> B
-      <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(U):
-	  y <span style="color:#f92672">^=</span> (y <span style="color:#f92672">&gt;&gt;</span> U) <span style="color:#f92672">&amp;</span> D
-      mt<span style="color:#f92672">.</span>append(y <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffffffff</span>)
-    obj <span style="color:#f92672">=</span> MT19937(<span style="color:#ae81ff">0</span>)
-    obj<span style="color:#f92672">.</span>mt <span style="color:#f92672">=</span> mt
-    obj<span style="color:#f92672">.</span>index <span style="color:#f92672">=</span> obj<span style="color:#f92672">.</span>N
-    <span style="color:#66d9ef">return</span> obj
+<span class="k">def</span> <span class="nf">clone_mt19937</span><span class="p">(</span><span class="n">numbers</span><span class="p">):</span>
+    <span class="n">T</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="mh">0xEFC60000</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="mi">18</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="mh">0xFFFFFFFF</span>
+    <span class="n">S</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span> <span class="mh">0x9D2C5680</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">number</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">:</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="n">number</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="n">L</span><span class="p">)</span>
+      <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">T</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">C</span>
+      <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="p">):</span>
+	  <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;&lt;</span> <span class="n">S</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">B</span>
+      <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">U</span><span class="p">):</span>
+	  <span class="n">y</span> <span class="o">^=</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;&gt;</span> <span class="n">U</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">D</span>
+      <span class="n">mt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="p">)</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">mt</span> <span class="o">=</span> <span class="n">mt</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">N</span>
+    <span class="k">return</span> <span class="n">obj</span>
 </code></pre></div><p>If you think about how to protect this, the weak link is the temper function which can be easily &ldquo;untempered&rdquo;, so you can implement one way functions like hashing functions, which will render untempering, computationally unfeasible.</p>
 <h2 id="challenge-24">Challenge 24</h2>
 <p>Recovering a 16 bit seed used for encryption:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> set3 <span style="color:#f92672">import</span> MT19937
-<span style="color:#f92672">from</span> Crypto.Util.strxor <span style="color:#f92672">import</span> strxor
-<span style="color:#f92672">from</span> Crypto.Random <span style="color:#f92672">import</span> random
-<span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> long_to_bytes
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">set3</span> <span class="kn">import</span> <span class="n">MT19937</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.strxor</span> <span class="kn">import</span> <span class="n">strxor</span>
+<span class="kn">from</span> <span class="nn">Crypto.Random</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span>
 
 
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MT19937Cipher</span>(MT19937):
+<span class="k">class</span> <span class="nc">MT19937Cipher</span><span class="p">(</span><span class="n">MT19937</span><span class="p">):</span>
 
-    <span style="color:#66d9ef">def</span> __init__(self, seed):
-      super(MT19937Cipher, self)<span style="color:#f92672">.</span>__init__(seed <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffff</span>)
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+      <span class="nb">super</span><span class="p">(</span><span class="n">MT19937Cipher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">seed</span> <span class="o">&amp;</span> <span class="mh">0xffff</span><span class="p">)</span>
 
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">gen_8_bit_val</span>(self):
-      <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>extract_number() <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xff</span>
-
-
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">mt19937_cipher_oracle</span>(ciphertext, key):
-    obj <span style="color:#f92672">=</span> MT19937Cipher(key)
-    randlen <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>choice(range(<span style="color:#ae81ff">10</span>))
-    ciphertext <span style="color:#f92672">+=</span> long_to_bytes(random<span style="color:#f92672">.</span>getrandbits(randlen <span style="color:#f92672">*</span> <span style="color:#ae81ff">8</span>))
-    s <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
-    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(ciphertext)):
-      s <span style="color:#f92672">+=</span> long_to_bytes(obj<span style="color:#f92672">.</span>gen_8_bit_val())
-    <span style="color:#66d9ef">return</span> strxor(s, ciphertext)
+    <span class="k">def</span> <span class="nf">gen_8_bit_val</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_number</span><span class="p">()</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
 
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">break_mt19937_cipher</span>(ciphertext, plaintext):
-    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0xffff</span>):
-      obj <span style="color:#f92672">=</span> MT19937Cipher(i)
-      s <span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span>
-      <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(len(ciphertext)):
-	  s <span style="color:#f92672">+=</span> long_to_bytes(obj<span style="color:#f92672">.</span>gen_8_bit_val())
-      <span style="color:#66d9ef">if</span> plaintext <span style="color:#f92672">in</span> strxor(s, ciphertext):
-	  <span style="color:#66d9ef">return</span> i
+<span class="k">def</span> <span class="nf">mt19937_cipher_oracle</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937Cipher</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">randlen</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">ciphertext</span> <span class="o">+=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">getrandbits</span><span class="p">(</span><span class="n">randlen</span> <span class="o">*</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&#34;&#34;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">)):</span>
+      <span class="n">s</span> <span class="o">+=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">gen_8_bit_val</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">strxor</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">break_mt19937_cipher</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">,</span> <span class="n">plaintext</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">):</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937Cipher</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+      <span class="n">s</span> <span class="o">=</span><span class="s2">&#34;&#34;</span>
+      <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">)):</span>
+	  <span class="n">s</span> <span class="o">+=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">gen_8_bit_val</span><span class="p">())</span>
+      <span class="k">if</span> <span class="n">plaintext</span> <span class="ow">in</span> <span class="n">strxor</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">):</span>
+	  <span class="k">return</span> <span class="n">i</span>
 </code></pre></div><h2 id="tests">Tests</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e">#!/usr/bin/env python</span>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="ch">#!/usr/bin/env python</span>
 
-<span style="color:#f92672">import</span> unittest
-<span style="color:#f92672">from</span> base64 <span style="color:#f92672">import</span> b64decode
-<span style="color:#f92672">from</span> test <span style="color:#f92672">import</span> support
-<span style="color:#f92672">from</span> set3 <span style="color:#f92672">import</span> produce_ciphertext, break_cbc_padding_oracle, cbc_padding_oracle, form_nonce, aes_ctr_encrypt_decrypt,\
-    break_ctr_reused_nonce_substitutions, MT19937, break_mt19937_seeded_time, clone_mt19937,\
-    mt19937_cipher_oracle, break_mt19937_cipher
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
+<span class="kn">from</span> <span class="nn">test</span> <span class="kn">import</span> <span class="n">support</span>
+<span class="kn">from</span> <span class="nn">set3</span> <span class="kn">import</span> <span class="n">produce_ciphertext</span><span class="p">,</span> <span class="n">break_cbc_padding_oracle</span><span class="p">,</span> <span class="n">cbc_padding_oracle</span><span class="p">,</span> <span class="n">form_nonce</span><span class="p">,</span> <span class="n">aes_ctr_encrypt_decrypt</span><span class="p">,</span>\
+    <span class="n">break_ctr_reused_nonce_substitutions</span><span class="p">,</span> <span class="n">MT19937</span><span class="p">,</span> <span class="n">break_mt19937_seeded_time</span><span class="p">,</span> <span class="n">clone_mt19937</span><span class="p">,</span>\
+    <span class="n">mt19937_cipher_oracle</span><span class="p">,</span> <span class="n">break_mt19937_cipher</span>
 
-<span style="color:#f92672">from</span> set2 <span style="color:#f92672">import</span> encryption_get_oracle_func, generate_random_key
-<span style="color:#f92672">from</span> set1 <span style="color:#f92672">import</span> unpadpkcs7
-<span style="color:#f92672">from</span> Crypto.Random <span style="color:#f92672">import</span> random
-
-
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Set3</span>(unittest<span style="color:#f92672">.</span>TestCase):
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch17</span>(self):
-      key <span style="color:#f92672">=</span> generate_random_key()
-      oracle <span style="color:#f92672">=</span> encryption_get_oracle_func(key, cbc_padding_oracle)
-
-      lst <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#34;MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=&#34;</span>,
-	     <span style="color:#e6db74">&#34;MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93&#34;</span>]
-
-      <span style="color:#66d9ef">for</span> plaintext <span style="color:#f92672">in</span> lst:
-	  <span style="color:#75715e">#test funcs</span>
-	  ciphertext <span style="color:#f92672">=</span> produce_ciphertext(plaintext, key)
-	  self<span style="color:#f92672">.</span>assertTrue(oracle(ciphertext))
-
-	  self<span style="color:#f92672">.</span>assertEqual(unpadpkcs7(break_cbc_padding_oracle(oracle, ciphertext)), plaintext)
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch18</span>(self):
-      cipher <span style="color:#f92672">=</span> b64decode(<span style="color:#e6db74">&#34;L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==&#34;</span>)
-      key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;YELLOW SUBMARINE&#34;</span>
-      nonce <span style="color:#f92672">=</span> form_nonce(<span style="color:#ae81ff">0</span>)
-
-      self<span style="color:#f92672">.</span>assertEqual(aes_ctr_encrypt_decrypt(cipher, key, nonce),
-		       <span style="color:#e6db74">&#34;Yo, VIP Let&#39;s kick it Ice, Ice, baby Ice, Ice, baby &#34;</span>)
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch19</span>(self):
-      <span style="color:#75715e"># this is a many time pad problem</span>
-      plaintexts <span style="color:#f92672">=</span> []
-      ciphertexts <span style="color:#f92672">=</span> []
-
-      key <span style="color:#f92672">=</span> generate_random_key(<span style="color:#ae81ff">16</span>)
-
-      <span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;static/19.txt&#39;</span>, <span style="color:#e6db74">&#39;r&#39;</span>) <span style="color:#66d9ef">as</span> myfile:
-	  <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> myfile<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>splitlines():
-	      plaintexts<span style="color:#f92672">.</span>append(b64decode(line))
-
-      <span style="color:#66d9ef">for</span> plaintext <span style="color:#f92672">in</span> plaintexts:
-	  nonce <span style="color:#f92672">=</span> form_nonce(<span style="color:#ae81ff">0</span>)
-	  ciphertexts<span style="color:#f92672">.</span>append(aes_ctr_encrypt_decrypt(plaintext, key, nonce))
-
-      break_ctr_reused_nonce_substitutions(ciphertexts)
-      <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">NotImplementedError</span>
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch20</span>(self):
-      plaintexts <span style="color:#f92672">=</span> []
-      ciphertexts <span style="color:#f92672">=</span> []
-
-      key <span style="color:#f92672">=</span> generate_random_key(<span style="color:#ae81ff">16</span>)
-
-      <span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;static/19.txt&#39;</span>, <span style="color:#e6db74">&#39;r&#39;</span>) <span style="color:#66d9ef">as</span> myfile:
-	  <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> myfile<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>splitlines():
-	      plaintexts<span style="color:#f92672">.</span>append(b64decode(line))
-
-      <span style="color:#66d9ef">for</span> plaintext <span style="color:#f92672">in</span> plaintexts:
-	  nonce <span style="color:#f92672">=</span> form_nonce(<span style="color:#ae81ff">0</span>)
-	  ciphertexts<span style="color:#f92672">.</span>append(aes_ctr_encrypt_decrypt(plaintext, key, nonce))
-
-      <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">NotImplementedError</span>
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch21</span>(self):
-      obj <span style="color:#f92672">=</span> MT19937(<span style="color:#ae81ff">1337</span>)
-      self<span style="color:#f92672">.</span>assertEqual(obj<span style="color:#f92672">.</span>extract_number(), <span style="color:#ae81ff">1125387415</span>)
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch22</span>(self):
-      <span style="color:#f92672">import</span> time
-      time<span style="color:#f92672">.</span>sleep(random<span style="color:#f92672">.</span>choice(range(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10</span>)))
-
-      time_now <span style="color:#f92672">=</span> int(time<span style="color:#f92672">.</span>time())
-      orig_seed <span style="color:#f92672">=</span> time_now
-      obj <span style="color:#f92672">=</span> MT19937(time_now)
-      num <span style="color:#f92672">=</span> obj<span style="color:#f92672">.</span>extract_number()
-
-      time<span style="color:#f92672">.</span>sleep(random<span style="color:#f92672">.</span>choice(range(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10</span>)))
-
-      i <span style="color:#f92672">=</span> break_mt19937_seeded_time(int(time<span style="color:#f92672">.</span>time()), num)
-      self<span style="color:#f92672">.</span>assertEqual(i, orig_seed)
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch23</span>(self):
-
-      <span style="color:#66d9ef">for</span> randseed <span style="color:#f92672">in</span> [random<span style="color:#f92672">.</span>choice(range(<span style="color:#ae81ff">100000</span>)) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]:
-	  obj <span style="color:#f92672">=</span> MT19937(randseed)
-	  numbers <span style="color:#f92672">=</span> []
-	  <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">624</span>):
-	      f <span style="color:#f92672">=</span> obj<span style="color:#f92672">.</span>extract_number()
-	      numbers<span style="color:#f92672">.</span>append(f)
-	  obj2 <span style="color:#f92672">=</span> clone_mt19937(numbers)
-	  self<span style="color:#f92672">.</span>assertEqual(obj<span style="color:#f92672">.</span>extract_number(), obj2<span style="color:#f92672">.</span>extract_number())
-
-    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">test_ch24</span>(self):
-      randseed <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>choice(range(<span style="color:#ae81ff">0xffff</span>))
-      plaintext <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;A&#34;</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">14</span>
-      cipher <span style="color:#f92672">=</span> mt19937_cipher_oracle(plaintext, randseed)
-      self<span style="color:#f92672">.</span>assertEqual(randseed, break_mt19937_cipher(cipher, plaintext))
+<span class="kn">from</span> <span class="nn">set2</span> <span class="kn">import</span> <span class="n">encryption_get_oracle_func</span><span class="p">,</span> <span class="n">generate_random_key</span>
+<span class="kn">from</span> <span class="nn">set1</span> <span class="kn">import</span> <span class="n">unpadpkcs7</span>
+<span class="kn">from</span> <span class="nn">Crypto.Random</span> <span class="kn">import</span> <span class="n">random</span>
 
 
+<span class="k">class</span> <span class="nc">Set3</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">test_ch17</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">key</span> <span class="o">=</span> <span class="n">generate_random_key</span><span class="p">()</span>
+      <span class="n">oracle</span> <span class="o">=</span> <span class="n">encryption_get_oracle_func</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">cbc_padding_oracle</span><span class="p">)</span>
 
-<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
-    support<span style="color:#f92672">.</span>run_unittest(Set3)
+      <span class="n">lst</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&#34;MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=&#34;</span><span class="p">,</span>
+	     <span class="s2">&#34;MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93&#34;</span><span class="p">]</span>
+
+      <span class="k">for</span> <span class="n">plaintext</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
+	  <span class="c1">#test funcs</span>
+	  <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">produce_ciphertext</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+	  <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">oracle</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">))</span>
+
+	  <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">unpadpkcs7</span><span class="p">(</span><span class="n">break_cbc_padding_oracle</span><span class="p">(</span><span class="n">oracle</span><span class="p">,</span> <span class="n">ciphertext</span><span class="p">)),</span> <span class="n">plaintext</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_ch18</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">cipher</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="s2">&#34;L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==&#34;</span><span class="p">)</span>
+      <span class="n">key</span> <span class="o">=</span> <span class="s2">&#34;YELLOW SUBMARINE&#34;</span>
+      <span class="n">nonce</span> <span class="o">=</span> <span class="n">form_nonce</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">aes_ctr_encrypt_decrypt</span><span class="p">(</span><span class="n">cipher</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">nonce</span><span class="p">),</span>
+		       <span class="s2">&#34;Yo, VIP Let&#39;s kick it Ice, Ice, baby Ice, Ice, baby &#34;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_ch19</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="c1"># this is a many time pad problem</span>
+      <span class="n">plaintexts</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="n">ciphertexts</span> <span class="o">=</span> <span class="p">[]</span>
+
+      <span class="n">key</span> <span class="o">=</span> <span class="n">generate_random_key</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;static/19.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+	  <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">myfile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+	      <span class="n">plaintexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b64decode</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+
+      <span class="k">for</span> <span class="n">plaintext</span> <span class="ow">in</span> <span class="n">plaintexts</span><span class="p">:</span>
+	  <span class="n">nonce</span> <span class="o">=</span> <span class="n">form_nonce</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+	  <span class="n">ciphertexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aes_ctr_encrypt_decrypt</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">nonce</span><span class="p">))</span>
+
+      <span class="n">break_ctr_reused_nonce_substitutions</span><span class="p">(</span><span class="n">ciphertexts</span><span class="p">)</span>
+      <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">test_ch20</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">plaintexts</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="n">ciphertexts</span> <span class="o">=</span> <span class="p">[]</span>
+
+      <span class="n">key</span> <span class="o">=</span> <span class="n">generate_random_key</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;static/19.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+	  <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">myfile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+	      <span class="n">plaintexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b64decode</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+
+      <span class="k">for</span> <span class="n">plaintext</span> <span class="ow">in</span> <span class="n">plaintexts</span><span class="p">:</span>
+	  <span class="n">nonce</span> <span class="o">=</span> <span class="n">form_nonce</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+	  <span class="n">ciphertexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aes_ctr_encrypt_decrypt</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">nonce</span><span class="p">))</span>
+
+      <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">test_ch21</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937</span><span class="p">(</span><span class="mi">1337</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">extract_number</span><span class="p">(),</span> <span class="mi">1125387415</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_ch22</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="kn">import</span> <span class="nn">time</span>
+      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+
+      <span class="n">time_now</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+      <span class="n">orig_seed</span> <span class="o">=</span> <span class="n">time_now</span>
+      <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937</span><span class="p">(</span><span class="n">time_now</span><span class="p">)</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">extract_number</span><span class="p">()</span>
+
+      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+
+      <span class="n">i</span> <span class="o">=</span> <span class="n">break_mt19937_seeded_time</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()),</span> <span class="n">num</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">orig_seed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">test_ch23</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+      <span class="k">for</span> <span class="n">randseed</span> <span class="ow">in</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]:</span>
+	  <span class="n">obj</span> <span class="o">=</span> <span class="n">MT19937</span><span class="p">(</span><span class="n">randseed</span><span class="p">)</span>
+	  <span class="n">numbers</span> <span class="o">=</span> <span class="p">[]</span>
+	  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">624</span><span class="p">):</span>
+	      <span class="n">f</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">extract_number</span><span class="p">()</span>
+	      <span class="n">numbers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+	  <span class="n">obj2</span> <span class="o">=</span> <span class="n">clone_mt19937</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span>
+	  <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">extract_number</span><span class="p">(),</span> <span class="n">obj2</span><span class="o">.</span><span class="n">extract_number</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">test_ch24</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">randseed</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">))</span>
+      <span class="n">plaintext</span> <span class="o">=</span> <span class="s2">&#34;A&#34;</span> <span class="o">*</span> <span class="mi">14</span>
+      <span class="n">cipher</span> <span class="o">=</span> <span class="n">mt19937_cipher_oracle</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">randseed</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">randseed</span><span class="p">,</span> <span class="n">break_mt19937_cipher</span><span class="p">(</span><span class="n">cipher</span><span class="p">,</span> <span class="n">plaintext</span><span class="p">))</span>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&#34;__main__&#34;</span><span class="p">:</span>
+    <span class="n">support</span><span class="o">.</span><span class="n">run_unittest</span><span class="p">(</span><span class="n">Set3</span><span class="p">)</span>
 </code></pre></div>
 
 

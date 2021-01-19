@@ -28,6 +28,9 @@
 This is a shell script that splits a pdf into chapters using the builtin bookmarks:
 #!/bin/bash  infile=$1 # input pdf outputprefix=$2 [ -e &#34;$infile&#34; -a -n &#34;$outputprefix&#34; ] || exit 1 # Invalid args pagenumbers=( $(pdftk &#34;$infile&#34; dump_data | grep -A1 &#39;^BookmarkLevel: 1&#39;| \ 	grep &#39;^BookmarkPageNumber: &#39; | cut -f2 -d&#39; &#39; | uniq) end ) for ((i=0; i &lt; ${#pagenumbers[@]} - 1; &#43;&#43;i)); do a=${pagenumbers[i]} # start page number b=${pagenumbers[i&#43;1]} # end page number [ &#34;$b&#34; = &#34;end&#34; ] || b=$[b-1] pdftk &#34;$infile&#34; cat $a-$b output &#34;${outputprefix}&#34;_$a-$b."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -60,30 +63,30 @@ Nov. 8, 2018
 <br/><br/>
 <p>I tend to print books or zines on paper rather than read it from the screen (I help to kill one small tree every week), I have some tools to do make this easier.</p>
 <p>This is a shell script that splits a pdf into chapters using the builtin bookmarks:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e">#!/bin/bash
-</span><span style="color:#75715e"></span>
-infile<span style="color:#f92672">=</span>$1 <span style="color:#75715e"># input pdf</span>
-outputprefix<span style="color:#f92672">=</span>$2
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="cp">#!/bin/bash
+</span><span class="cp"></span>
+<span class="nv">infile</span><span class="o">=</span><span class="nv">$1</span> <span class="c1"># input pdf</span>
+<span class="nv">outputprefix</span><span class="o">=</span><span class="nv">$2</span>
 
-<span style="color:#f92672">[</span> -e <span style="color:#e6db74">&#34;</span>$infile<span style="color:#e6db74">&#34;</span> -a -n <span style="color:#e6db74">&#34;</span>$outputprefix<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span> <span style="color:#f92672">||</span> exit <span style="color:#ae81ff">1</span> <span style="color:#75715e"># Invalid args</span>
+<span class="o">[</span> -e <span class="s2">&#34;</span><span class="nv">$infile</span><span class="s2">&#34;</span> -a -n <span class="s2">&#34;</span><span class="nv">$outputprefix</span><span class="s2">&#34;</span> <span class="o">]</span> <span class="o">||</span> <span class="nb">exit</span> <span class="m">1</span> <span class="c1"># Invalid args</span>
 
-pagenumbers<span style="color:#f92672">=(</span> <span style="color:#66d9ef">$(</span>pdftk <span style="color:#e6db74">&#34;</span>$infile<span style="color:#e6db74">&#34;</span> dump_data | grep -A1 <span style="color:#e6db74">&#39;^BookmarkLevel: 1&#39;</span>| <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>	      grep <span style="color:#e6db74">&#39;^BookmarkPageNumber: &#39;</span> | cut -f2 -d<span style="color:#e6db74">&#39; &#39;</span> | uniq<span style="color:#66d9ef">)</span>
-	    end <span style="color:#f92672">)</span>
+<span class="nv">pagenumbers</span><span class="o">=(</span> <span class="k">$(</span>pdftk <span class="s2">&#34;</span><span class="nv">$infile</span><span class="s2">&#34;</span> dump_data <span class="p">|</span> grep -A1 <span class="s1">&#39;^BookmarkLevel: 1&#39;</span><span class="p">|</span> <span class="se">\
+</span><span class="se"></span>	      grep <span class="s1">&#39;^BookmarkPageNumber: &#39;</span> <span class="p">|</span> cut -f2 -d<span class="s1">&#39; &#39;</span> <span class="p">|</span> uniq<span class="k">)</span>
+	    end <span class="o">)</span>
 
-<span style="color:#66d9ef">for</span> <span style="color:#f92672">((</span>i<span style="color:#f92672">=</span>0; i &lt; <span style="color:#e6db74">${#</span>pagenumbers[@]<span style="color:#e6db74">}</span> - 1; ++i<span style="color:#f92672">))</span>; <span style="color:#66d9ef">do</span>
-  a<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>pagenumbers[i]<span style="color:#e6db74">}</span> <span style="color:#75715e"># start page number</span>
-  b<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>pagenumbers[i+1]<span style="color:#e6db74">}</span> <span style="color:#75715e"># end page number</span>
-  <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$b<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;end&#34;</span> <span style="color:#f92672">]</span> <span style="color:#f92672">||</span> b<span style="color:#f92672">=</span>$<span style="color:#f92672">[</span>b-1<span style="color:#f92672">]</span>
-  pdftk <span style="color:#e6db74">&#34;</span>$infile<span style="color:#e6db74">&#34;</span> cat $a-$b output <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>outputprefix<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>_$a-$b.pdf
-<span style="color:#66d9ef">done</span>
+<span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span>0<span class="p">;</span> i &lt; <span class="si">${#</span><span class="nv">pagenumbers</span><span class="p">[@]</span><span class="si">}</span> - 1<span class="p">;</span> ++i<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+  <span class="nv">a</span><span class="o">=</span><span class="si">${</span><span class="nv">pagenumbers</span><span class="p">[i]</span><span class="si">}</span> <span class="c1"># start page number</span>
+  <span class="nv">b</span><span class="o">=</span><span class="si">${</span><span class="nv">pagenumbers</span><span class="p">[i+1]</span><span class="si">}</span> <span class="c1"># end page number</span>
+  <span class="o">[</span> <span class="s2">&#34;</span><span class="nv">$b</span><span class="s2">&#34;</span> <span class="o">=</span> <span class="s2">&#34;end&#34;</span> <span class="o">]</span> <span class="o">||</span> <span class="nv">b</span><span class="o">=</span>$<span class="o">[</span>b-1<span class="o">]</span>
+  pdftk <span class="s2">&#34;</span><span class="nv">$infile</span><span class="s2">&#34;</span> cat <span class="nv">$a</span>-<span class="nv">$b</span> output <span class="s2">&#34;</span><span class="si">${</span><span class="nv">outputprefix</span><span class="si">}</span><span class="s2">&#34;</span>_<span class="nv">$a</span>-<span class="nv">$b</span>.pdf
+<span class="k">done</span>
 </code></pre></div><p>I use duplex since I don&rsquo;t own a fancy printer that does in-hardware printing. duplex is a bunch of shell scripts that makes use of scripts provided by cups, it has a queue and can print non pdf documents (Postscript and textfiles).</p>
 <p>I think definitively better than my old 5 line shell script that used pdftk:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pdftk A<span style="color:#f92672">=</span>$1 cat Aeven output /tmp/even_pages.pdf
-pdftk A<span style="color:#f92672">=</span>$1 cat Aodd  output /tmp/odd_pages.pdf
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">pdftk <span class="nv">A</span><span class="o">=</span><span class="nv">$1</span> cat Aeven output /tmp/even_pages.pdf
+pdftk <span class="nv">A</span><span class="o">=</span><span class="nv">$1</span> cat Aodd  output /tmp/odd_pages.pdf
 pdftk /tmp/even_pages.pdf cat end-1 output /tmp/even_pages1.pdf
 lp /tmp/odd_pages.pdf
-read -rsp <span style="color:#e6db74">$&#39;Press any key when ready...\n&#39;</span> -n1 key
+<span class="nb">read</span> -rsp <span class="s1">$&#39;Press any key when ready...\n&#39;</span> -n1 key
 lp /tmp/even_pages1.pdf
 </code></pre></div>
 

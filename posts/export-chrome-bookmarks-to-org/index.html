@@ -27,6 +27,9 @@
 <meta name="twitter:description" content="Simple code to parse chrome bookmarks output, and spit it to an org file.
 (spit BOOKMARKSFILEORG (let [file (slurp BOOKMARKSFILEHTML) hickorystuff (-&gt; file h/parse h/as-hickory)] (clojure.string/join &#34;\n&#34; (map (fn [x] (let [content (:content x) link (-&gt; x :attrs :href)] (format &#34;* [[%s][%s]]&#34; link (clojure.string/replace (first content) #&#34;\[|\]&#34; {&#34;[&#34; &#34;{&#34; &#34;]&#34; &#34;}&#34;})))) (hs/select (hs/tag :a) hickorystuff))))) "/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -58,22 +61,22 @@ Dec. 10, 2019
 
 <br/><br/>
 <p>Simple code to parse chrome bookmarks output, and spit it to an org file.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#a6e22e">spit</span> BOOKMARKSFILEORG
-      (<span style="color:#66d9ef">let </span>[file (slurp BOOKMARKSFILEHTML)
-	  hickorystuff (-&gt; file
-			   h/parse
-			   h/as-hickory)]
-      (<span style="color:#a6e22e">clojure.string/join</span> <span style="color:#e6db74">&#34;\n&#34;</span> (map (<span style="color:#66d9ef">fn </span>[x] (<span style="color:#66d9ef">let </span>[content (<span style="color:#e6db74">:content</span> x)
-						  link (-&gt; x
-							   <span style="color:#e6db74">:attrs</span>
-							   <span style="color:#e6db74">:href</span>)]
-					      (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34;* [[%s][%s]]&#34;</span> link (<span style="color:#a6e22e">clojure.string/replace</span>
-									   (first content)
-									   <span style="color:#f92672">#</span><span style="color:#e6db74">&#34;\[|\]&#34;</span>
-									   {<span style="color:#e6db74">&#34;[&#34;</span> <span style="color:#e6db74">&#34;{&#34;</span>
-									    <span style="color:#e6db74">&#34;]&#34;</span> <span style="color:#e6db74">&#34;}&#34;</span>}))))
-				     (<span style="color:#a6e22e">hs/select</span> (<span style="color:#a6e22e">hs/tag</span> <span style="color:#e6db74">:a</span>)
-						hickorystuff)))))
+<div class="highlight"><pre class="chroma"><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="nf">spit</span> <span class="nv">BOOKMARKSFILEORG</span>
+      <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">file</span> <span class="p">(</span><span class="nb">slurp </span><span class="nv">BOOKMARKSFILEHTML</span><span class="p">)</span>
+	  <span class="nv">hickorystuff</span> <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">file</span>
+			   <span class="nv">h/parse</span>
+			   <span class="nv">h/as-hickory</span><span class="p">)]</span>
+      <span class="p">(</span><span class="nf">clojure.string/join</span> <span class="s">&#34;\n&#34;</span> <span class="p">(</span><span class="nb">map </span><span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">x</span><span class="p">]</span> <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">content</span> <span class="p">(</span><span class="ss">:content</span> <span class="nv">x</span><span class="p">)</span>
+						  <span class="nv">link</span> <span class="p">(</span><span class="nb">-&gt; </span><span class="nv">x</span>
+							   <span class="ss">:attrs</span>
+							   <span class="ss">:href</span><span class="p">)]</span>
+					      <span class="p">(</span><span class="nf">format</span> <span class="s">&#34;* [[%s][%s]]&#34;</span> <span class="nv">link</span> <span class="p">(</span><span class="nf">clojure.string/replace</span>
+									   <span class="p">(</span><span class="nb">first </span><span class="nv">content</span><span class="p">)</span>
+									   <span class="o">#</span><span class="s">&#34;\[|\]&#34;</span>
+									   <span class="p">{</span><span class="s">&#34;[&#34;</span> <span class="s">&#34;{&#34;</span>
+									    <span class="s">&#34;]&#34;</span> <span class="s">&#34;}&#34;</span><span class="p">}))))</span>
+				     <span class="p">(</span><span class="nf">hs/select</span> <span class="p">(</span><span class="nf">hs/tag</span> <span class="ss">:a</span><span class="p">)</span>
+						<span class="nv">hickorystuff</span><span class="p">)))))</span>
 </code></pre></div>
 
 

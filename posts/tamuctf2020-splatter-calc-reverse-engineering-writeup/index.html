@@ -29,6 +29,9 @@ Introduction We played tamuctf 2020, it was a 10-day-long beginner to intermedia
 The reverse problems were simple/okay-ish, most of them are in rust.
 The challenge This writeup is about a problem called splatter calc, it&rsquo;s a rust binary that asks for an initial rng"/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -65,7 +68,7 @@ Apr. 9, 2020
 <p>The reverse problems were simple/okay-ish, most of them are in rust.</p>
 <h2 id="the-challenge">The challenge</h2>
 <p>This writeup is about a problem called splatter calc, it&rsquo;s a rust binary that asks for an initial rng</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">kali@kali:/mnt/shared/ctfs/tamuctf20/rev$ ./splatter-calc
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text">kali@kali:/mnt/shared/ctfs/tamuctf20/rev$ ./splatter-calc
 Please enter an initial rng: 1
 Oops, you didn&#39;t guess the right number. You got 13896084676171490950 with final state 62298657904
 71643905
@@ -78,119 +81,119 @@ Oops, you didn&#39;t guess the right number. You got 13896084676171490950 with f
 <p>This looks really simple for a rust binary.</p>
 <p>What interests us in the node in grey.</p>
 <p>The code looks like this:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm">.text:<span style="color:#960050;background-color:#1e0010">0000555555559945</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">eax</span>, <span style="color:#66d9ef">ebx</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559947</span>                 <span style="color:#a6e22e">and</span>     <span style="color:#66d9ef">eax</span>, <span style="color:#ae81ff">7</span>
-.text:<span style="color:#960050;background-color:#1e0010">000055555555994</span><span style="color:#a6e22e">A</span>                 <span style="color:#66d9ef">shl</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#ae81ff">4</span>
-.text:<span style="color:#960050;background-color:#1e0010">000055555555994</span><span style="color:#a6e22e">E</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">rdi</span>, [<span style="color:#66d9ef">rsp</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rax</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">138</span><span style="color:#66d9ef">h</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">var_B0</span>]
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559956</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, [<span style="color:#66d9ef">rsp</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rax</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">138</span><span style="color:#66d9ef">h</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">var_A8</span>]
-.text:<span style="color:#960050;background-color:#1e0010">000055555555995</span><span style="color:#a6e22e">E</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">esi</span>, <span style="color:#ae81ff">0</span><span style="color:#66d9ef">CAFEBABEh</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559963</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rdx</span>, <span style="color:#66d9ef">rbx</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559966</span>                 <span style="color:#a6e22e">call</span>    <span style="color:#66d9ef">qword</span> <span style="color:#66d9ef">ptr</span> [<span style="color:#66d9ef">rax</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">18</span><span style="color:#66d9ef">h</span>]
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559969</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">r13</span>, <span style="color:#ae81ff">83</span><span style="color:#66d9ef">F66D0E3h</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559973</span>                 <span style="color:#a6e22e">imul</span>    <span style="color:#66d9ef">rbx</span>, <span style="color:#66d9ef">r13</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559977</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rbp</span>, <span style="color:#ae81ff">24</span><span style="color:#66d9ef">A452F8Eh</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559981</span>                 <span style="color:#a6e22e">add</span>     <span style="color:#66d9ef">rbx</span>, <span style="color:#66d9ef">rbp</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559984</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">ecx</span>, <span style="color:#66d9ef">ebx</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559986</span>                 <span style="color:#a6e22e">and</span>     <span style="color:#66d9ef">ecx</span>, <span style="color:#ae81ff">7</span>
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559989</span>                 <span style="color:#a6e22e">shl</span>     <span style="color:#66d9ef">rcx</span>, <span style="color:#ae81ff">4</span>
-.text:<span style="color:#960050;background-color:#1e0010">000055555555998</span><span style="color:#a6e22e">D</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">rdi</span>, [<span style="color:#66d9ef">rsp</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rcx</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">138</span><span style="color:#66d9ef">h</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">var_B0</span>]
-.text:<span style="color:#960050;background-color:#1e0010">0000555555559995</span>                 <span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rcx</span>, [<span style="color:#66d9ef">rsp</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rcx</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">138</span><span style="color:#66d9ef">h</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">var_A8</span>]
-.text:<span style="color:#960050;background-color:#1e0010">000055555555999</span><span style="color:#a6e22e">D</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">rsi</span>, <span style="color:#66d9ef">rax</span>
-.text:<span style="color:#960050;background-color:#1e0010">00005555555599</span><span style="color:#a6e22e">A0</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">rdx</span>, <span style="color:#66d9ef">rbx</span>
-.text:<span style="color:#960050;background-color:#1e0010">00005555555599</span><span style="color:#a6e22e">A3</span>                 <span style="color:#66d9ef">call</span>    <span style="color:#66d9ef">qword</span> <span style="color:#66d9ef">ptr</span> [<span style="color:#66d9ef">rcx</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">18</span><span style="color:#66d9ef">h</span>]
-.text:<span style="color:#960050;background-color:#1e0010">00005555555599</span><span style="color:#a6e22e">A6</span>                 <span style="color:#66d9ef">imul</span>    <span style="color:#66d9ef">rbx</span>, <span style="color:#66d9ef">r13</span>
-.text:<span style="color:#960050;background-color:#1e0010">00005555555599</span><span style="color:#a6e22e">AA</span>                 <span style="color:#66d9ef">add</span>     <span style="color:#66d9ef">rbx</span>, <span style="color:#66d9ef">rbp</span>
-.text:<span style="color:#960050;background-color:#1e0010">00005555555599</span><span style="color:#a6e22e">AD</span>                 <span style="color:#66d9ef">mov</span>     <span style="color:#66d9ef">ecx</span>, <span style="color:#66d9ef">ebx</span>
-<span style="color:#a6e22e">...</span>
+<div class="highlight"><pre class="chroma"><code class="language-asm" data-lang="asm"><span class="nl">.text:</span><span class="err">0000555555559945</span>                 <span class="nf">mov</span>     <span class="no">eax</span><span class="p">,</span> <span class="no">ebx</span>
+<span class="nl">.text:</span><span class="err">0000555555559947</span>                 <span class="nf">and</span>     <span class="no">eax</span><span class="p">,</span> <span class="mi">7</span>
+<span class="nl">.text:</span><span class="err">000055555555994</span><span class="nf">A</span>                 <span class="no">shl</span>     <span class="no">rax</span><span class="p">,</span> <span class="mi">4</span>
+<span class="nl">.text:</span><span class="err">000055555555994</span><span class="nf">E</span>                 <span class="no">mov</span>     <span class="no">rdi</span><span class="p">,</span> <span class="p">[</span><span class="no">rsp</span><span class="err">+</span><span class="no">rax</span><span class="err">+</span><span class="mi">138</span><span class="no">h</span><span class="err">+</span><span class="no">var_B0</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">0000555555559956</span>                 <span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="p">[</span><span class="no">rsp</span><span class="err">+</span><span class="no">rax</span><span class="err">+</span><span class="mi">138</span><span class="no">h</span><span class="err">+</span><span class="no">var_A8</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">000055555555995</span><span class="nf">E</span>                 <span class="no">mov</span>     <span class="no">esi</span><span class="p">,</span> <span class="mi">0</span><span class="no">CAFEBABEh</span>
+<span class="nl">.text:</span><span class="err">0000555555559963</span>                 <span class="nf">mov</span>     <span class="no">rdx</span><span class="p">,</span> <span class="no">rbx</span>
+<span class="nl">.text:</span><span class="err">0000555555559966</span>                 <span class="nf">call</span>    <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">0000555555559969</span>                 <span class="nf">mov</span>     <span class="no">r13</span><span class="p">,</span> <span class="mi">83</span><span class="no">F66D0E3h</span>
+<span class="nl">.text:</span><span class="err">0000555555559973</span>                 <span class="nf">imul</span>    <span class="no">rbx</span><span class="p">,</span> <span class="no">r13</span>
+<span class="nl">.text:</span><span class="err">0000555555559977</span>                 <span class="nf">mov</span>     <span class="no">rbp</span><span class="p">,</span> <span class="mi">24</span><span class="no">A452F8Eh</span>
+<span class="nl">.text:</span><span class="err">0000555555559981</span>                 <span class="nf">add</span>     <span class="no">rbx</span><span class="p">,</span> <span class="no">rbp</span>
+<span class="nl">.text:</span><span class="err">0000555555559984</span>                 <span class="nf">mov</span>     <span class="no">ecx</span><span class="p">,</span> <span class="no">ebx</span>
+<span class="nl">.text:</span><span class="err">0000555555559986</span>                 <span class="nf">and</span>     <span class="no">ecx</span><span class="p">,</span> <span class="mi">7</span>
+<span class="nl">.text:</span><span class="err">0000555555559989</span>                 <span class="nf">shl</span>     <span class="no">rcx</span><span class="p">,</span> <span class="mi">4</span>
+<span class="nl">.text:</span><span class="err">000055555555998</span><span class="nf">D</span>                 <span class="no">mov</span>     <span class="no">rdi</span><span class="p">,</span> <span class="p">[</span><span class="no">rsp</span><span class="err">+</span><span class="no">rcx</span><span class="err">+</span><span class="mi">138</span><span class="no">h</span><span class="err">+</span><span class="no">var_B0</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">0000555555559995</span>                 <span class="nf">mov</span>     <span class="no">rcx</span><span class="p">,</span> <span class="p">[</span><span class="no">rsp</span><span class="err">+</span><span class="no">rcx</span><span class="err">+</span><span class="mi">138</span><span class="no">h</span><span class="err">+</span><span class="no">var_A8</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">000055555555999</span><span class="nf">D</span>                 <span class="no">mov</span>     <span class="no">rsi</span><span class="p">,</span> <span class="no">rax</span>
+<span class="nl">.text:</span><span class="err">00005555555599</span><span class="nf">A0</span>                 <span class="no">mov</span>     <span class="no">rdx</span><span class="p">,</span> <span class="no">rbx</span>
+<span class="nl">.text:</span><span class="err">00005555555599</span><span class="nf">A3</span>                 <span class="no">call</span>    <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rcx</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span>
+<span class="nl">.text:</span><span class="err">00005555555599</span><span class="nf">A6</span>                 <span class="no">imul</span>    <span class="no">rbx</span><span class="p">,</span> <span class="no">r13</span>
+<span class="nl">.text:</span><span class="err">00005555555599</span><span class="nf">AA</span>                 <span class="no">add</span>     <span class="no">rbx</span><span class="p">,</span> <span class="no">rbp</span>
+<span class="nl">.text:</span><span class="err">00005555555599</span><span class="nf">AD</span>                 <span class="no">mov</span>     <span class="no">ecx</span><span class="p">,</span> <span class="no">ebx</span>
+<span class="na">...</span>
 </code></pre></div><p>Functions are stored in a jump table, they are offsted ecx &amp; 7:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm">.text:<span style="color:#960050;background-color:#1e0010">0000555555559966</span>                 <span style="color:#a6e22e">call</span>    <span style="color:#66d9ef">qword</span> <span style="color:#66d9ef">ptr</span> [<span style="color:#66d9ef">rax</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#ae81ff">18</span><span style="color:#66d9ef">h</span>]
+<div class="highlight"><pre class="chroma"><code class="language-asm" data-lang="asm"><span class="nl">.text:</span><span class="err">0000555555559966</span>                 <span class="nf">call</span>    <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span>
 </code></pre></div><p>I extracted all the functions:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm">func_0:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">retn</span>
+<div class="highlight"><pre class="chroma"><code class="language-asm" data-lang="asm"><span class="nl">func_0:</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">retn</span>
 
-func_1:
-<span style="color:#a6e22e">lea</span>     <span style="color:#66d9ef">rax</span>, [<span style="color:#66d9ef">rsi</span><span style="color:#960050;background-color:#1e0010">+</span><span style="color:#66d9ef">rdx</span>]
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_1:</span>
+<span class="nf">lea</span>     <span class="no">rax</span><span class="p">,</span> <span class="p">[</span><span class="no">rsi</span><span class="err">+</span><span class="no">rdx</span><span class="p">]</span>
+<span class="nf">retn</span>
 
-func_2:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">sub</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rdx</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_2:</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">sub</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rdx</span>
+<span class="nf">retn</span>
 
-func_3:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">imul</span>    <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rdx</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_3:</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">imul</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">rdx</span>
+<span class="nf">retn</span>
 
-func_4:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">imul</span>    <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_4:</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">imul</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">retn</span>
 
-func_5:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rcx</span>, <span style="color:#66d9ef">rdx</span>
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">shl</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">cl</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_5:</span>
+<span class="nf">mov</span>     <span class="no">rcx</span><span class="p">,</span> <span class="no">rdx</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">shl</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">cl</span>
+<span class="nf">retn</span>
 
-func_6:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rcx</span>, <span style="color:#66d9ef">rdx</span>
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">shr</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">cl</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_6:</span>
+<span class="nf">mov</span>     <span class="no">rcx</span><span class="p">,</span> <span class="no">rdx</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">shr</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">cl</span>
+<span class="nf">retn</span>
 
-func_7:
-<span style="color:#a6e22e">mov</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rsi</span>
-<span style="color:#a6e22e">xor</span>     <span style="color:#66d9ef">rax</span>, <span style="color:#66d9ef">rdx</span>
-<span style="color:#a6e22e">retn</span>
+<span class="nl">func_7:</span>
+<span class="nf">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rsi</span>
+<span class="nf">xor</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rdx</span>
+<span class="nf">retn</span>
 </code></pre></div><p>Finally the generated value needs to satisfy these constraints:</p>
 <figure>
     <img src="/tamuctf/conds-md.png"/> 
 </figure>
 
 <p>The algorithm is simple, so I rewrote it in python, if there was some delicate stuff that I couldn&rsquo;t implement correctly, I could have a used a symbolic execution framework like angr or triton for this.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> z3
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">z3</span>
 
-s <span style="color:#f92672">=</span> z3<span style="color:#f92672">.</span>Solver()
+<span class="n">s</span> <span class="o">=</span> <span class="n">z3</span><span class="o">.</span><span class="n">Solver</span><span class="p">()</span>
 
-<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">do_operation</span>(i, rsi, rdx):
-    <span style="color:#66d9ef">return</span> z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>,
-	       rsi,
-	       z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>,
-		     rsi <span style="color:#f92672">+</span> rdx,
-		     z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>,
-			   rsi <span style="color:#f92672">-</span> rdx,
-			   z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span>,
-				 rsi <span style="color:#f92672">*</span> rdx,
-				 z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">4</span>,
-				       rsi <span style="color:#f92672">*</span> rsi,
-				       z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">5</span>,
-					     rsi <span style="color:#f92672">&lt;&lt;</span> (rdx <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">8</span>),
-					     z3<span style="color:#f92672">.</span>If((i <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">7</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">6</span>,
-						   rsi <span style="color:#f92672">&gt;&gt;</span> (rdx <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">8</span>),
-						   rsi <span style="color:#f92672">^</span> rdx)))))))
+<span class="k">def</span> <span class="nf">do_operation</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">rsi</span><span class="p">,</span> <span class="n">rdx</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+	       <span class="n">rsi</span><span class="p">,</span>
+	       <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+		     <span class="n">rsi</span> <span class="o">+</span> <span class="n">rdx</span><span class="p">,</span>
+		     <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span>
+			   <span class="n">rsi</span> <span class="o">-</span> <span class="n">rdx</span><span class="p">,</span>
+			   <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span>
+				 <span class="n">rsi</span> <span class="o">*</span> <span class="n">rdx</span><span class="p">,</span>
+				 <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">,</span>
+				       <span class="n">rsi</span> <span class="o">*</span> <span class="n">rsi</span><span class="p">,</span>
+				       <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span><span class="p">,</span>
+					     <span class="n">rsi</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">rdx</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">),</span>
+					     <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">((</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">,</span>
+						   <span class="n">rsi</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="n">rdx</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">),</span>
+						   <span class="n">rsi</span> <span class="o">^</span> <span class="n">rdx</span><span class="p">)))))))</span>
 
-rbx <span style="color:#f92672">=</span> z3<span style="color:#f92672">.</span>BitVec(<span style="color:#e6db74">&#34;input&#34;</span>, <span style="color:#ae81ff">64</span>)
-r13 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x83F66D0E3</span>
-rbp <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x24A452F8E</span>
-rsi <span style="color:#f92672">=</span> <span style="color:#ae81ff">0xCAFEBABE</span>
+<span class="n">rbx</span> <span class="o">=</span> <span class="n">z3</span><span class="o">.</span><span class="n">BitVec</span><span class="p">(</span><span class="s2">&#34;input&#34;</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+<span class="n">r13</span> <span class="o">=</span> <span class="mh">0x83F66D0E3</span>
+<span class="n">rbp</span> <span class="o">=</span> <span class="mh">0x24A452F8E</span>
+<span class="n">rsi</span> <span class="o">=</span> <span class="mh">0xCAFEBABE</span>
 
-<span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">8</span>):
-    rdx <span style="color:#f92672">=</span> rbx
-    rax <span style="color:#f92672">=</span> do_operation(rbx, rsi, rdx)
-    rbx <span style="color:#f92672">=</span> rbx <span style="color:#f92672">*</span> r13
-    rbx <span style="color:#f92672">=</span> rbx <span style="color:#f92672">+</span> rbp
-    ecx <span style="color:#f92672">=</span> (rbx <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffffffff</span>)
-    rsi <span style="color:#f92672">=</span> rax
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">rdx</span> <span class="o">=</span> <span class="n">rbx</span>
+    <span class="n">rax</span> <span class="o">=</span> <span class="n">do_operation</span><span class="p">(</span><span class="n">rbx</span><span class="p">,</span> <span class="n">rsi</span><span class="p">,</span> <span class="n">rdx</span><span class="p">)</span>
+    <span class="n">rbx</span> <span class="o">=</span> <span class="n">rbx</span> <span class="o">*</span> <span class="n">r13</span>
+    <span class="n">rbx</span> <span class="o">=</span> <span class="n">rbx</span> <span class="o">+</span> <span class="n">rbp</span>
+    <span class="n">ecx</span> <span class="o">=</span> <span class="p">(</span><span class="n">rbx</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="p">)</span>
+    <span class="n">rsi</span> <span class="o">=</span> <span class="n">rax</span>
 
-s<span style="color:#f92672">.</span>add(<span style="color:#ae81ff">0x471DE8678AE30BA1</span>  <span style="color:#f92672">==</span> rbx)
-s<span style="color:#f92672">.</span>add(<span style="color:#ae81ff">0x0ACDEE2ED87A5D886</span> <span style="color:#f92672">==</span> rax)
+<span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mh">0x471DE8678AE30BA1</span>  <span class="o">==</span> <span class="n">rbx</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mh">0x0ACDEE2ED87A5D886</span> <span class="o">==</span> <span class="n">rax</span><span class="p">)</span>
 
-<span style="color:#66d9ef">print</span>(s<span style="color:#f92672">.</span>check())
-<span style="color:#66d9ef">print</span>(s<span style="color:#f92672">.</span>model())
+<span class="k">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">model</span><span class="p">())</span>
 </code></pre></div><p>And we get the value to use on the remote server</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">(hacking3) kali@kali:/mnt/shared/ctfs/tamuctf20/rev$ python solver.py
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text">(hacking3) kali@kali:/mnt/shared/ctfs/tamuctf20/rev$ python solver.py
 sat
 [input = 982730589345]
 </code></pre></div>

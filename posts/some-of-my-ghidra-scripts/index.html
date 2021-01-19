@@ -27,6 +27,9 @@
 <meta name="twitter:description" content="AllCyclomaticComplexity.java This a script to calculate the cyclomatic complexity of all the functions, as the name implies the metric is correlated with function complexity, it is the sum of unique paths within the CFG. You can read more about it here.
 Ghidra offers the functionality actually, this is just a wrapper to loop over all functions and sort them. What is nice about the ghidra console is when you print a function name you can click it."/>
 
+
+<link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
+
 </head>
 <body class="terminal">
     <div class="container">
@@ -60,150 +63,150 @@ Dec. 10, 2019
 <h2 id="allcyclomaticcomplexity-dot-java">AllCyclomaticComplexity.java</h2>
 <p>This a script to calculate the cyclomatic complexity of all the functions, as the name implies the metric is correlated with function complexity, it is the sum of unique paths within the CFG. You can read more about it <a href="https://en.wikipedia.org/wiki/Cyclomatic%5Fcomplexity">here</a>.</p>
 <p>Ghidra offers the functionality actually, this is just a wrapper to loop over all functions and sort them. What is nice about the ghidra console is when you print a function name you can click it.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">/* ###
-</span><span style="color:#75715e"> * IP: GHIDRA
-</span><span style="color:#75715e"> * REVIEWED: YES
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> * Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
-</span><span style="color:#75715e"> * you may not use this file except in compliance with the License.
-</span><span style="color:#75715e"> * You may obtain a copy of the License at
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> *      http://www.apache.org/licenses/LICENSE-2.0
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> * Unless required by applicable law or agreed to in writing, software
-</span><span style="color:#75715e"> * distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
-</span><span style="color:#75715e"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-</span><span style="color:#75715e"> * See the License for the specific language governing permissions and
-</span><span style="color:#75715e"> * limitations under the License.
-</span><span style="color:#75715e"> */</span>
-<span style="color:#75715e">//Script to compute and print the cyclomatic complexity of the current function.
-</span><span style="color:#75715e">//@category Functions
-</span><span style="color:#75715e"></span>
-<span style="color:#f92672">import</span> ghidra.app.script.GhidraScript<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.listing.Function<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.util.CyclomaticComplexity<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> java.io.*<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> java.util.*<span style="color:#f92672">;</span>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="cm">/* ###
+</span><span class="cm"> * IP: GHIDRA
+</span><span class="cm"> * REVIEWED: YES
+</span><span class="cm"> *
+</span><span class="cm"> * Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+</span><span class="cm"> * you may not use this file except in compliance with the License.
+</span><span class="cm"> * You may obtain a copy of the License at
+</span><span class="cm"> *
+</span><span class="cm"> *      http://www.apache.org/licenses/LICENSE-2.0
+</span><span class="cm"> *
+</span><span class="cm"> * Unless required by applicable law or agreed to in writing, software
+</span><span class="cm"> * distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+</span><span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+</span><span class="cm"> * See the License for the specific language governing permissions and
+</span><span class="cm"> * limitations under the License.
+</span><span class="cm"> */</span>
+<span class="c1">//Script to compute and print the cyclomatic complexity of the current function.
+</span><span class="c1">//@category Functions
+</span><span class="c1"></span>
+<span class="kn">import</span> <span class="nn">ghidra.app.script.GhidraScript</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.listing.Function</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.util.CyclomaticComplexity</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.io.*</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.*</span><span class="o">;</span>
 
 
-<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AllCyclomaticComplexity</span> <span style="color:#66d9ef">extends</span> GhidraScript <span style="color:#f92672">{</span>
-    <span style="color:#a6e22e">@Override</span>
-    <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
-      <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>currentProgram <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-	  printerr<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;no current program&#34;</span><span style="color:#f92672">);</span>
-	  <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
-      <span style="color:#f92672">}</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AllCyclomaticComplexity</span> <span class="kd">extends</span> <span class="n">GhidraScript</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">currentProgram</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+	  <span class="n">printerr</span><span class="o">(</span><span class="s">&#34;no current program&#34;</span><span class="o">);</span>
+	  <span class="k">return</span><span class="o">;</span>
+      <span class="o">}</span>
 
-      Function function <span style="color:#f92672">=</span> getFirstFunction<span style="color:#f92672">();</span>
+      <span class="n">Function</span> <span class="n">function</span> <span class="o">=</span> <span class="n">getFirstFunction</span><span class="o">();</span>
 
-      <span style="color:#66d9ef">int</span> count <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
-      FileWriter f0 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FileWriter<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/tmp/output.txt&#34;</span><span style="color:#f92672">);</span>
+      <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+      <span class="n">FileWriter</span> <span class="n">f0</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileWriter</span><span class="o">(</span><span class="s">&#34;/tmp/output.txt&#34;</span><span class="o">);</span>
 
-      String newLine <span style="color:#f92672">=</span> System<span style="color:#f92672">.</span><span style="color:#a6e22e">getProperty</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;line.separator&#34;</span><span style="color:#f92672">);</span>
+      <span class="n">String</span> <span class="n">newLine</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">&#34;line.separator&#34;</span><span class="o">);</span>
 
-      List<span style="color:#f92672">&lt;</span>Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;&gt;</span> lst <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;</span>Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;&gt;();</span>
-      <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+      <span class="n">List</span><span class="o">&lt;</span><span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">lst</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;();</span>
+      <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
 
-	  <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>monitor<span style="color:#f92672">.</span><span style="color:#a6e22e">isCancelled</span><span style="color:#f92672">()</span> <span style="color:#f92672">||</span> function <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-	      <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
-	  <span style="color:#f92672">}</span>
+	  <span class="k">if</span> <span class="o">(</span><span class="n">monitor</span><span class="o">.</span><span class="na">isCancelled</span><span class="o">()</span> <span class="o">||</span> <span class="n">function</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+	      <span class="k">break</span><span class="o">;</span>
+	  <span class="o">}</span>
 
-	  CyclomaticComplexity cyclomaticComplexity <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> CyclomaticComplexity<span style="color:#f92672">();</span>
-	  <span style="color:#66d9ef">int</span> cyc <span style="color:#f92672">=</span> cyclomaticComplexity<span style="color:#f92672">.</span><span style="color:#a6e22e">calculateCyclomaticComplexity</span><span style="color:#f92672">(</span>function<span style="color:#f92672">,</span> monitor<span style="color:#f92672">);</span>
-	  f0<span style="color:#f92672">.</span><span style="color:#a6e22e">write</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;complexity: &#34;</span> <span style="color:#f92672">+</span> function<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">+</span> cyc <span style="color:#f92672">+</span> newLine<span style="color:#f92672">);</span>
-	  lst<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;(</span>function<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">(),</span> cyc<span style="color:#f92672">));</span>
-	  function <span style="color:#f92672">=</span> getFunctionAfter<span style="color:#f92672">(</span>function<span style="color:#f92672">);</span>
-	  count<span style="color:#f92672">++;</span>
-      <span style="color:#f92672">}</span>
-      println<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Sorting by cyclomatic complexity&#34;</span><span style="color:#f92672">);</span>
-      Collections<span style="color:#f92672">.</span><span style="color:#a6e22e">sort</span><span style="color:#f92672">(</span>lst<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ComparatorFunc<span style="color:#f92672">());</span>
+	  <span class="n">CyclomaticComplexity</span> <span class="n">cyclomaticComplexity</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CyclomaticComplexity</span><span class="o">();</span>
+	  <span class="kt">int</span> <span class="n">cyc</span> <span class="o">=</span> <span class="n">cyclomaticComplexity</span><span class="o">.</span><span class="na">calculateCyclomaticComplexity</span><span class="o">(</span><span class="n">function</span><span class="o">,</span> <span class="n">monitor</span><span class="o">);</span>
+	  <span class="n">f0</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="s">&#34;complexity: &#34;</span> <span class="o">+</span> <span class="n">function</span><span class="o">.</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">&#34; &#34;</span><span class="o">+</span> <span class="n">cyc</span> <span class="o">+</span> <span class="n">newLine</span><span class="o">);</span>
+	  <span class="n">lst</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;(</span><span class="n">function</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">cyc</span><span class="o">));</span>
+	  <span class="n">function</span> <span class="o">=</span> <span class="n">getFunctionAfter</span><span class="o">(</span><span class="n">function</span><span class="o">);</span>
+	  <span class="n">count</span><span class="o">++;</span>
+      <span class="o">}</span>
+      <span class="n">println</span><span class="o">(</span><span class="s">&#34;Sorting by cyclomatic complexity&#34;</span><span class="o">);</span>
+      <span class="n">Collections</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">lst</span><span class="o">,</span> <span class="k">new</span> <span class="n">ComparatorFunc</span><span class="o">());</span>
 
-      <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;</span> x<span style="color:#f92672">:</span> lst<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-	  println<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;complexity: &#34;</span> <span style="color:#f92672">+</span> x<span style="color:#f92672">.</span><span style="color:#a6e22e">x</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; is &#34;</span> <span style="color:#f92672">+</span> x<span style="color:#f92672">.</span><span style="color:#a6e22e">y</span><span style="color:#f92672">);</span>
-      <span style="color:#f92672">}</span>
+      <span class="k">for</span> <span class="o">(</span><span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">x</span><span class="o">:</span> <span class="n">lst</span><span class="o">)</span> <span class="o">{</span>
+	  <span class="n">println</span><span class="o">(</span><span class="s">&#34;complexity: &#34;</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="na">x</span> <span class="o">+</span> <span class="s">&#34; is &#34;</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="na">y</span><span class="o">);</span>
+      <span class="o">}</span>
 
-      println<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;found forward = &#34;</span> <span style="color:#f92672">+</span> count<span style="color:#f92672">);</span>
-      f0<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+      <span class="n">println</span><span class="o">(</span><span class="s">&#34;found forward = &#34;</span> <span class="o">+</span> <span class="n">count</span><span class="o">);</span>
+      <span class="n">f0</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
 
-    <span style="color:#f92672">}</span>
-<span style="color:#f92672">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Tuple</span><span style="color:#f92672">&lt;</span>X<span style="color:#f92672">,</span> Y<span style="color:#f92672">&gt;</span> <span style="color:#f92672">{</span>
-    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> X x<span style="color:#f92672">;</span>
-    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> Y y<span style="color:#f92672">;</span>
-    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">Tuple</span><span style="color:#f92672">(</span>X x<span style="color:#f92672">,</span> Y y<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-      <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">x</span> <span style="color:#f92672">=</span> x<span style="color:#f92672">;</span>
-      <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">y</span> <span style="color:#f92672">=</span> y<span style="color:#f92672">;</span>
-    <span style="color:#f92672">}</span>
-<span style="color:#f92672">}</span>
+<span class="kd">class</span> <span class="nc">Tuple</span><span class="o">&lt;</span><span class="n">X</span><span class="o">,</span> <span class="n">Y</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">X</span> <span class="n">x</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">Y</span> <span class="n">y</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="nf">Tuple</span><span class="o">(</span><span class="n">X</span> <span class="n">x</span><span class="o">,</span> <span class="n">Y</span> <span class="n">y</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">;</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ComparatorFunc</span> <span style="color:#66d9ef">implements</span> Comparator<span style="color:#f92672">&lt;</span>Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;&gt;</span>  <span style="color:#f92672">{</span>
-    <span style="color:#75715e">// @Override
-</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">compare</span><span style="color:#f92672">(</span>Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;</span> o1<span style="color:#f92672">,</span> Tuple<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;</span> o2<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-      <span style="color:#66d9ef">return</span> o1<span style="color:#f92672">.</span><span style="color:#a6e22e">y</span><span style="color:#f92672">.</span><span style="color:#a6e22e">compareTo</span><span style="color:#f92672">(</span>o2<span style="color:#f92672">.</span><span style="color:#a6e22e">y</span><span style="color:#f92672">);</span>
-    <span style="color:#f92672">}</span>
-<span style="color:#f92672">}</span>
+<span class="kd">class</span> <span class="nc">ComparatorFunc</span> <span class="kd">implements</span> <span class="n">Comparator</span><span class="o">&lt;</span><span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span>  <span class="o">{</span>
+    <span class="c1">// @Override
+</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compare</span><span class="o">(</span><span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">o1</span><span class="o">,</span> <span class="n">Tuple</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">o2</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">return</span> <span class="n">o1</span><span class="o">.</span><span class="na">y</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">o2</span><span class="o">.</span><span class="na">y</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </code></pre></div><h2 id="xormemoryscriptbackward-dot-java">XorMemoryScriptBackward.java</h2>
 <p>This is the same as XorMemoryScript.java that is shipped by default in ghidra, except that it XOR backward, I actually unpacked a malware sample this way, it xored .text but backwards.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">/* ###
-</span><span style="color:#75715e"> * IP: GHIDRA
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> * Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
-</span><span style="color:#75715e"> * you may not use this file except in compliance with the License.
-</span><span style="color:#75715e"> * You may obtain a copy of the License at
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> *      http://www.apache.org/licenses/LICENSE-2.0
-</span><span style="color:#75715e"> *
-</span><span style="color:#75715e"> * Unless required by applicable law or agreed to in writing, software
-</span><span style="color:#75715e"> * distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
-</span><span style="color:#75715e"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-</span><span style="color:#75715e"> * See the License for the specific language governing permissions and
-</span><span style="color:#75715e"> * limitations under the License.
-</span><span style="color:#75715e"> */</span>
-<span style="color:#75715e">//XOR&#39;s the memory of the current program.
-</span><span style="color:#75715e">//@category Memory
-</span><span style="color:#75715e"></span>
-<span style="color:#f92672">import</span> ghidra.app.script.GhidraScript<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.address.Address<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.address.AddressIterator<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.address.AddressSet<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.address.AddressSetView<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.mem.Memory<span style="color:#f92672">;</span>
-<span style="color:#f92672">import</span> ghidra.program.model.mem.MemoryBlock<span style="color:#f92672">;</span>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="cm">/* ###
+</span><span class="cm"> * IP: GHIDRA
+</span><span class="cm"> *
+</span><span class="cm"> * Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+</span><span class="cm"> * you may not use this file except in compliance with the License.
+</span><span class="cm"> * You may obtain a copy of the License at
+</span><span class="cm"> *
+</span><span class="cm"> *      http://www.apache.org/licenses/LICENSE-2.0
+</span><span class="cm"> *
+</span><span class="cm"> * Unless required by applicable law or agreed to in writing, software
+</span><span class="cm"> * distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+</span><span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+</span><span class="cm"> * See the License for the specific language governing permissions and
+</span><span class="cm"> * limitations under the License.
+</span><span class="cm"> */</span>
+<span class="c1">//XOR&#39;s the memory of the current program.
+</span><span class="c1">//@category Memory
+</span><span class="c1"></span>
+<span class="kn">import</span> <span class="nn">ghidra.app.script.GhidraScript</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.address.Address</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.address.AddressIterator</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.address.AddressSet</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.address.AddressSetView</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.mem.Memory</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">ghidra.program.model.mem.MemoryBlock</span><span class="o">;</span>
 
-<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">XorMemoryScriptBackward</span> <span style="color:#66d9ef">extends</span> GhidraScript <span style="color:#f92672">{</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">XorMemoryScriptBackward</span> <span class="kd">extends</span> <span class="n">GhidraScript</span> <span class="o">{</span>
 
-    <span style="color:#a6e22e">@Override</span>
-    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
 
-      <span style="color:#75715e">// default to the current memory block
-</span><span style="color:#75715e"></span>      Memory memory <span style="color:#f92672">=</span> currentProgram<span style="color:#f92672">.</span><span style="color:#a6e22e">getMemory</span><span style="color:#f92672">();</span>
-      MemoryBlock block <span style="color:#f92672">=</span> memory<span style="color:#f92672">.</span><span style="color:#a6e22e">getBlock</span><span style="color:#f92672">(</span>currentAddress<span style="color:#f92672">);</span>
-      AddressSetView set <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> AddressSet<span style="color:#f92672">(</span>block<span style="color:#f92672">.</span><span style="color:#a6e22e">getStart</span><span style="color:#f92672">(),</span>block<span style="color:#f92672">.</span><span style="color:#a6e22e">getEnd</span><span style="color:#f92672">());</span>
+      <span class="c1">// default to the current memory block
+</span><span class="c1"></span>      <span class="n">Memory</span> <span class="n">memory</span> <span class="o">=</span> <span class="n">currentProgram</span><span class="o">.</span><span class="na">getMemory</span><span class="o">();</span>
+      <span class="n">MemoryBlock</span> <span class="n">block</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="na">getBlock</span><span class="o">(</span><span class="n">currentAddress</span><span class="o">);</span>
+      <span class="n">AddressSetView</span> <span class="n">set</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AddressSet</span><span class="o">(</span><span class="n">block</span><span class="o">.</span><span class="na">getStart</span><span class="o">(),</span><span class="n">block</span><span class="o">.</span><span class="na">getEnd</span><span class="o">());</span>
 
-      <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>currentSelection <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>currentSelection<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
-	  set <span style="color:#f92672">=</span> currentSelection<span style="color:#f92672">;</span>
-      <span style="color:#f92672">}</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">currentSelection</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">currentSelection</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
+	  <span class="n">set</span> <span class="o">=</span> <span class="n">currentSelection</span><span class="o">;</span>
+      <span class="o">}</span>
 
-      <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> xorValues <span style="color:#f92672">=</span> askBytes<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;XorValue&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Values to xor with selected memory:&#34;</span><span style="color:#f92672">);</span>
+      <span class="kt">byte</span><span class="o">[]</span> <span class="n">xorValues</span> <span class="o">=</span> <span class="n">askBytes</span><span class="o">(</span><span class="s">&#34;XorValue&#34;</span><span class="o">,</span> <span class="s">&#34;Values to xor with selected memory:&#34;</span><span class="o">);</span>
 
-      <span style="color:#66d9ef">int</span> valueLength <span style="color:#f92672">=</span> xorValues<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span>
-      <span style="color:#66d9ef">int</span> xorIndex <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+      <span class="kt">int</span> <span class="n">valueLength</span> <span class="o">=</span> <span class="n">xorValues</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+      <span class="kt">int</span> <span class="n">xorIndex</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
 
-      AddressIterator aIter <span style="color:#f92672">=</span> set<span style="color:#f92672">.</span><span style="color:#a6e22e">getAddresses</span><span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+      <span class="n">AddressIterator</span> <span class="n">aIter</span> <span class="o">=</span> <span class="n">set</span><span class="o">.</span><span class="na">getAddresses</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
 
-      <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span>aIter<span style="color:#f92672">.</span><span style="color:#a6e22e">hasNext</span><span style="color:#f92672">()</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>monitor<span style="color:#f92672">.</span><span style="color:#a6e22e">isCancelled</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
-	  Address addr <span style="color:#f92672">=</span> aIter<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">();</span>
-	  monitor<span style="color:#f92672">.</span><span style="color:#a6e22e">setMessage</span><span style="color:#f92672">(</span>addr<span style="color:#f92672">.</span><span style="color:#a6e22e">toString</span><span style="color:#f92672">());</span>
-	  <span style="color:#66d9ef">byte</span> xorValue <span style="color:#f92672">=</span> xorValues<span style="color:#f92672">[</span>xorIndex<span style="color:#f92672">];</span>
-	  <span style="color:#66d9ef">byte</span> b <span style="color:#f92672">=</span> memory<span style="color:#f92672">.</span><span style="color:#a6e22e">getByte</span><span style="color:#f92672">(</span>addr<span style="color:#f92672">);</span>
-	  b <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>b <span style="color:#f92672">^</span> xorValue<span style="color:#f92672">);</span>
-	  memory<span style="color:#f92672">.</span><span style="color:#a6e22e">setByte</span><span style="color:#f92672">(</span>addr<span style="color:#f92672">,</span> b<span style="color:#f92672">);</span>
-	  xorIndex <span style="color:#f92672">+=</span> 1<span style="color:#f92672">;</span>
-	  xorIndex <span style="color:#f92672">=</span> xorIndex <span style="color:#f92672">%</span> valueLength<span style="color:#f92672">;</span>
-      <span style="color:#f92672">}</span>
-    <span style="color:#f92672">}</span>
-<span style="color:#f92672">}</span>
+      <span class="k">while</span> <span class="o">(</span><span class="n">aIter</span><span class="o">.</span><span class="na">hasNext</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">monitor</span><span class="o">.</span><span class="na">isCancelled</span><span class="o">())</span> <span class="o">{</span>
+	  <span class="n">Address</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">aIter</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+	  <span class="n">monitor</span><span class="o">.</span><span class="na">setMessage</span><span class="o">(</span><span class="n">addr</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+	  <span class="kt">byte</span> <span class="n">xorValue</span> <span class="o">=</span> <span class="n">xorValues</span><span class="o">[</span><span class="n">xorIndex</span><span class="o">];</span>
+	  <span class="kt">byte</span> <span class="n">b</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="na">getByte</span><span class="o">(</span><span class="n">addr</span><span class="o">);</span>
+	  <span class="n">b</span> <span class="o">=</span> <span class="o">(</span><span class="kt">byte</span><span class="o">)</span> <span class="o">(</span><span class="n">b</span> <span class="o">^</span> <span class="n">xorValue</span><span class="o">);</span>
+	  <span class="n">memory</span><span class="o">.</span><span class="na">setByte</span><span class="o">(</span><span class="n">addr</span><span class="o">,</span> <span class="n">b</span><span class="o">);</span>
+	  <span class="n">xorIndex</span> <span class="o">+=</span> <span class="n">1</span><span class="o">;</span>
+	  <span class="n">xorIndex</span> <span class="o">=</span> <span class="n">xorIndex</span> <span class="o">%</span> <span class="n">valueLength</span><span class="o">;</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
 </code></pre></div>
 
 
