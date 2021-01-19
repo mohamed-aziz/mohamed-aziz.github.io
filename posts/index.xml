@@ -102,16 +102,5 @@ But how to hear the music? For me I use a solution based on pulseaudio and ffmpe
 (defun org-capture-fill-template (&amp;amp;optional template initial annotation) &amp;#34;Fill a template and return the filled template as a string. The template may still contain \&amp;#34;%?\&amp;#34; for cursor positioning.&amp;#34; (let* ((template (or template (org-capture-get :template))) (buffer (org-capture-get :buffer)) (file (buffer-file-name (or (buffer-base-buffer buffer) buffer))) (time (let* ((c (or (org-capture-get :default-time) (current-time))) (d (decode-time c))) (if (&amp;lt; (nth 2 d) org-extend-today-until) (encode-time 0 59 23 (1- (nth 3 d)) (nth 4 d) (nth 5 d)) c))) (v-t (format-time-string (org-time-stamp-format nil) time)) (v-T (format-time-string (org-time-stamp-format t) time)) (v-u (format-time-string (org-time-stamp-format nil t) time)) (v-U (format-time-string (org-time-stamp-format t t) time)) (v-c (and kill-ring (current-kill 0))) (v-x (or (org-get-x-clipboard &amp;#39;PRIMARY) (org-get-x-clipboard &amp;#39;CLIPBOARD) (org-get-x-clipboard &amp;#39;SECONDARY) &amp;#34;&amp;#34;))	;ensure it is a string ;; `initial&amp;#39; and `annotation&amp;#39; might have been passed.</description>
     </item>
     
-    <item>
-      <title>How I print books</title>
-      <link>https://aziz.tn/posts/how-i-print-books/</link>
-      <pubDate>Thu, 08 Nov 2018 00:00:00 +0100</pubDate>
-      
-      <guid>https://aziz.tn/posts/how-i-print-books/</guid>
-      <description>I tend to print books or zines on paper rather than read it from the screen (I help to kill one small tree every week), I have some tools to do make this easier.
-This is a shell script to split a pdf into chapters using the builtin bookmarks:
-#!/bin/bash  infile=$1 # input pdf outputprefix=$2 [ -e &amp;#34;$infile&amp;#34; -a -n &amp;#34;$outputprefix&amp;#34; ] || exit 1 # Invalid args pagenumbers=( $(pdftk &amp;#34;$infile&amp;#34; dump_data | grep -A1 &amp;#39;^BookmarkLevel: 1&amp;#39;| \ 	grep &amp;#39;^BookmarkPageNumber: &amp;#39; | cut -f2 -d&amp;#39; &amp;#39; | uniq) end ) for ((i=0; i &amp;lt; ${#pagenumbers[@]} - 1; ++i)); do a=${pagenumbers[i]} # start page number b=${pagenumbers[i+1]} # end page number [ &amp;#34;$b&amp;#34; = &amp;#34;end&amp;#34; ] || b=$[b-1] pdftk &amp;#34;$infile&amp;#34; cat $a-$b output &amp;#34;${outputprefix}&amp;#34;_$a-$b.</description>
-    </item>
-    
   </channel>
 </rss>
