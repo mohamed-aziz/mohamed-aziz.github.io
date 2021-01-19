@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Mohamed Aziz Knani (محمد عزيز الكناني) website/posts/counsel-fix-org-mode-tags-in-emacs/</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="all,follow">
+    <meta name="googlebot" content="index,follow,snippet,archive">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/terminal-0.7.1.min.css">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/animate-3.7.2.min.css">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/console.css">
+    
+      <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+       <meta property="og:title" content="Counsel fix org-mode tags in Emacs" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://aziz.tn/posts/counsel-fix-org-mode-tags-in-emacs/" /><meta property="article:published_time" content="2019-01-02T00:00:00+01:00" />
+
+
+
+<meta name="twitter:title" content="Counsel fix org-mode tags in Emacs"/>
+<meta name="twitter:description" content="Hello, another Emacs post, been using this code for probably a year so I&rsquo;m sharing it.
+(defun org-capture-fill-template (&amp;optional template initial annotation) &#34;Fill a template and return the filled template as a string. The template may still contain \&#34;%?\&#34; for cursor positioning.&#34; (let* ((template (or template (org-capture-get :template))) (buffer (org-capture-get :buffer)) (file (buffer-file-name (or (buffer-base-buffer buffer) buffer))) (time (let* ((c (or (org-capture-get :default-time) (current-time))) (d (decode-time c))) (if (&lt; (nth 2 d) org-extend-today-until) (encode-time 0 59 23 (1- (nth 3 d)) (nth 4 d) (nth 5 d)) c))) (v-t (format-time-string (org-time-stamp-format nil) time)) (v-T (format-time-string (org-time-stamp-format t) time)) (v-u (format-time-string (org-time-stamp-format nil t) time)) (v-U (format-time-string (org-time-stamp-format t t) time)) (v-c (and kill-ring (current-kill 0))) (v-x (or (org-get-x-clipboard &#39;PRIMARY) (org-get-x-clipboard &#39;CLIPBOARD) (org-get-x-clipboard &#39;SECONDARY) &#34;&#34;))	;ensure it is a string ;; `initial&#39; and `annotation&#39; might have been passed."/>
+
+</head>
+<body class="terminal">
+    <div class="container">
+        <div class="terminal-nav">
+          <header class="terminal-logo">
+            <div class="logo terminal-prompt">
+              
+              
+              <a href="https://aziz.tn/" class="no-style ">Mohamed Aziz Knani (محمد عزيز الكناني) website</a>:~# 
+              <a href='https://aziz.tn/posts'>posts</a>/<a href='https://aziz.tn/posts/counsel-fix-org-mode-tags-in-emacs'>counsel-fix-org-mode-tags-in-emacs</a>/</div></header>
+          <nav class="terminal-menu">
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                <li><a href="https://aziz.tn/about/" typeof="ListItem">about/</a></li>
+                
+                <li><a href="https://aziz.tn/posts/" typeof="ListItem">posts/</a></li>
+                
+            </ul>
+          </nav>
+        </div>
+    </div>
+
+    <div class="container animated fadeInDown fast" >
+        
+<h1>Counsel fix org-mode tags in Emacs</h1>
+
+Jan. 2, 2019
+
+
+<br/><br/>
+<p>Hello, another Emacs post, been using this code for probably a year so I&rsquo;m sharing it.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-emacs-lisp" data-lang="emacs-lisp">(defun org-capture-fill-template (<span style="color:#66d9ef">&amp;optional</span> template initial annotation)
+  <span style="color:#e6db74">&#34;Fill a template and return the filled template as a string.
+</span><span style="color:#e6db74">The template may still contain \&#34;%?\&#34; for cursor positioning.&#34;</span>
+  (let* ((template (or template (org-capture-get :template)))
+       (buffer (org-capture-get :buffer))
+       (file (<span style="color:#a6e22e">buffer-file-name</span> (or (<span style="color:#a6e22e">buffer-base-buffer</span> buffer) buffer)))
+       (time (let* ((c (or (org-capture-get :default-time) (<span style="color:#a6e22e">current-time</span>)))
+		    (d (<span style="color:#a6e22e">decode-time</span> c)))
+	       (if (<span style="color:#a6e22e">&lt;</span> (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">2</span> d) org-extend-today-until)
+		   (<span style="color:#a6e22e">encode-time</span> <span style="color:#ae81ff">0</span> <span style="color:#ae81ff">59</span> <span style="color:#ae81ff">23</span> (<span style="color:#a6e22e">1-</span> (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">3</span> d)) (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">4</span> d) (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">5</span> d))
+		 c)))
+       (v-t (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">nil</span>) time))
+       (v-T (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">t</span>) time))
+       (v-u (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>) time))
+       (v-U (<span style="color:#a6e22e">format-time-string</span> (org-time-stamp-format <span style="color:#66d9ef">t</span> <span style="color:#66d9ef">t</span>) time))
+       (v-c (and kill-ring (current-kill <span style="color:#ae81ff">0</span>)))
+       (v-x (or (org-get-x-clipboard <span style="color:#e6db74">&#39;PRIMARY</span>)
+		(org-get-x-clipboard <span style="color:#e6db74">&#39;CLIPBOARD</span>)
+		(org-get-x-clipboard <span style="color:#e6db74">&#39;SECONDARY</span>)
+		<span style="color:#e6db74">&#34;&#34;</span>))			<span style="color:#75715e">;ensure it is a string</span>
+       <span style="color:#75715e">;; `initial&#39; and `annotation&#39; might have been passed.  But if</span>
+       <span style="color:#75715e">;; the property list has them, we prefer those values.</span>
+       (v-i (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist :initial)
+		(and (<span style="color:#a6e22e">stringp</span> initial) (org-no-properties initial))
+		(org-capture-get :initial)
+		<span style="color:#e6db74">&#34;&#34;</span>))
+       (v-a
+	(let ((a (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist :annotation)
+		     annotation
+		     (org-capture-get :annotation)
+		     <span style="color:#e6db74">&#34;&#34;</span>)))
+	  <span style="color:#75715e">;; Is the link empty?  Then we do not want it...</span>
+	  (if (<span style="color:#a6e22e">equal</span> a <span style="color:#e6db74">&#34;[[]]&#34;</span>) <span style="color:#e6db74">&#34;&#34;</span> a)))
+       (l-re <span style="color:#e6db74">&#34;\\[\\[\\(.*?\\)\\]\\(\\[.*?\\]\\)?\\]&#34;</span>)
+       (v-A (if (and v-a (<span style="color:#a6e22e">string-match</span> l-re v-a))
+		(<span style="color:#a6e22e">replace-match</span> <span style="color:#e6db74">&#34;[[\\1][%^{Link description}]]&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> v-a)
+	      v-a))
+       (v-l (if (and v-a (<span style="color:#a6e22e">string-match</span> l-re v-a))
+		(<span style="color:#a6e22e">replace-match</span> <span style="color:#e6db74">&#34;\\1&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> v-a)
+	      v-a))
+       (v-n <span style="color:#a6e22e">user-full-name</span>)
+       (v-k (if (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker)
+		(org-no-properties org-clock-heading)
+	      <span style="color:#e6db74">&#34;&#34;</span>))
+       (v-K (if (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker)
+		(org-make-link-string
+		 (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34;%s::*%s&#34;</span>
+			 (<span style="color:#a6e22e">buffer-file-name</span> (<span style="color:#a6e22e">marker-buffer</span> org-clock-marker))
+			 v-k)
+		 v-k)
+	      <span style="color:#e6db74">&#34;&#34;</span>))
+       (v-f (or (org-capture-get :original-file-nondirectory) <span style="color:#e6db74">&#34;&#34;</span>))
+       (v-F (or (org-capture-get :original-file) <span style="color:#e6db74">&#34;&#34;</span>))
+       (org-capture--clipboards
+	(<span style="color:#a6e22e">delq</span> <span style="color:#66d9ef">nil</span>
+	      (<span style="color:#a6e22e">list</span> v-i
+		    (org-get-x-clipboard <span style="color:#e6db74">&#39;PRIMARY</span>)
+		    (org-get-x-clipboard <span style="color:#e6db74">&#39;CLIPBOARD</span>)
+		    (org-get-x-clipboard <span style="color:#e6db74">&#39;SECONDARY</span>)
+		    v-c))))
+
+    (setq org-store-link-plist (<span style="color:#a6e22e">plist-put</span> org-store-link-plist :annotation v-a))
+    (setq org-store-link-plist (<span style="color:#a6e22e">plist-put</span> org-store-link-plist :initial v-i))
+
+    (unless template
+      (setq template <span style="color:#e6db74">&#34;&#34;</span>)
+      (<span style="color:#a6e22e">message</span> <span style="color:#e6db74">&#34;no template&#34;</span>) (<span style="color:#a6e22e">ding</span>)
+      (sit-for <span style="color:#ae81ff">1</span>))
+    (save-window-excursion
+      (org-switch-to-buffer-other-window (<span style="color:#a6e22e">get-buffer-create</span> <span style="color:#e6db74">&#34;*Capture*&#34;</span>))
+      (<span style="color:#a6e22e">erase-buffer</span>)
+      (setq <span style="color:#a6e22e">buffer-file-name</span> <span style="color:#66d9ef">nil</span>)
+      (setq mark-active <span style="color:#66d9ef">nil</span>)
+      (<span style="color:#a6e22e">insert</span> template)
+      (<span style="color:#a6e22e">goto-char</span> (<span style="color:#a6e22e">point-min</span>))
+
+      <span style="color:#75715e">;; %[] insert contents of a file.</span>
+      (save-excursion
+      (while (<span style="color:#a6e22e">re-search-forward</span> <span style="color:#e6db74">&#34;%\\[\\(.+\\)\\]&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
+	(let ((filename (<span style="color:#a6e22e">expand-file-name</span> (match-string <span style="color:#ae81ff">1</span>)))
+	      (beg (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
+	      (end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>))))
+	  (unless (org-capture-escaped-%)
+	    (<span style="color:#a6e22e">delete-region</span> beg end)
+	    (<span style="color:#a6e22e">set-marker</span> beg <span style="color:#66d9ef">nil</span>)
+	    (<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
+	    (condition-case <span style="color:#a6e22e">error</span>
+		(<span style="color:#a6e22e">insert-file-contents</span> filename)
+	      (<span style="color:#a6e22e">error</span>
+	       (<span style="color:#a6e22e">insert</span> (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34;%%![couldn not insert %s: %s]&#34;</span>
+			       filename
+			       <span style="color:#a6e22e">error</span>))))))))
+
+      <span style="color:#75715e">;; Mark %() embedded elisp for later evaluation.</span>
+      (org-capture-expand-embedded-elisp <span style="color:#e6db74">&#39;mark</span>)
+
+      <span style="color:#75715e">;; Expand non-interactive templates.</span>
+      (let ((regexp <span style="color:#e6db74">&#34;%\\(:[-a-za-z]+\\|&lt;\\([^&gt;\n]+\\)&gt;\\|[aAcfFikKlntTuUx]\\)&#34;</span>))
+      (save-excursion
+	(while (<span style="color:#a6e22e">re-search-forward</span> regexp <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
+	  <span style="color:#75715e">;; `org-capture-escaped-%&#39; may modify buffer and cripple</span>
+	  <span style="color:#75715e">;; match-data.  Use markers instead.  Ditto for other</span>
+	  <span style="color:#75715e">;; templates.</span>
+	  (let ((pos (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
+		(end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>)))
+		(value (match-string <span style="color:#ae81ff">1</span>))
+		(time-string (match-string <span style="color:#ae81ff">2</span>)))
+	    (unless (org-capture-escaped-%)
+	      (<span style="color:#a6e22e">delete-region</span> pos end)
+	      (<span style="color:#a6e22e">set-marker</span> pos <span style="color:#66d9ef">nil</span>)
+	      (<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
+	      (let* ((inside-sexp? (org-capture-inside-embedded-elisp-p))
+		     (replacement
+		      (pcase (<span style="color:#a6e22e">string-to-char</span> value)
+			(<span style="color:#e6db74">?&lt;</span> (<span style="color:#a6e22e">format-time-string</span> time-string time))
+			(<span style="color:#e6db74">?:</span>
+			 (or (<span style="color:#a6e22e">plist-get</span> org-store-link-plist (<span style="color:#a6e22e">intern</span> value))
+			     <span style="color:#e6db74">&#34;&#34;</span>))
+			(<span style="color:#e6db74">?i</span>
+			 (if inside-sexp? v-i
+			   <span style="color:#75715e">;; Outside embedded Lisp, repeat leading</span>
+			   <span style="color:#75715e">;; characters before initial place holder</span>
+			   <span style="color:#75715e">;; every line.</span>
+			   (let ((lead (<span style="color:#a6e22e">buffer-substring-no-properties</span>
+					(<span style="color:#a6e22e">line-beginning-position</span>) (<span style="color:#a6e22e">point</span>))))
+			     (replace-regexp-in-string <span style="color:#e6db74">&#34;\n\\(.\\)&#34;</span>
+						       (<span style="color:#a6e22e">concat</span> lead <span style="color:#e6db74">&#34;\\1&#34;</span>)
+						       v-i <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#ae81ff">1</span>))))
+			(<span style="color:#e6db74">?a</span> v-a)
+			(<span style="color:#e6db74">?A</span> v-A)
+			(<span style="color:#e6db74">?c</span> v-c)
+			(<span style="color:#e6db74">?f</span> v-f)
+			(<span style="color:#e6db74">?F</span> v-F)
+			(<span style="color:#e6db74">?k</span> v-k)
+			(<span style="color:#e6db74">?K</span> v-K)
+			(<span style="color:#e6db74">?l</span> v-l)
+			(<span style="color:#e6db74">?n</span> v-n)
+			(<span style="color:#e6db74">?t</span> v-t)
+			(<span style="color:#e6db74">?T</span> v-T)
+			(<span style="color:#e6db74">?u</span> v-u)
+			(<span style="color:#e6db74">?U</span> v-U)
+			(<span style="color:#e6db74">?x</span> v-x))))
+		(<span style="color:#a6e22e">insert</span>
+		 (if inside-sexp?
+		     <span style="color:#75715e">;; Escape sensitive characters.</span>
+		     (replace-regexp-in-string <span style="color:#e6db74">&#34;[\\\&#34;]&#34;</span> <span style="color:#e6db74">&#34;\\\\\\&amp;&#34;</span> replacement)
+		   replacement))))))))
+
+      <span style="color:#75715e">;; Expand %() embedded Elisp.  Limit to Sexp originally marked.</span>
+      (org-capture-expand-embedded-elisp)
+
+      <span style="color:#75715e">;; Expand interactive templates.  This is the last step so that</span>
+      <span style="color:#75715e">;; template is mostly expanded when prompting happens.  Turn on</span>
+      <span style="color:#75715e">;; Org mode and set local variables.  This is to support</span>
+      <span style="color:#75715e">;; completion in interactive prompts.</span>
+      (let ((org-inhibit-startup <span style="color:#66d9ef">t</span>)) (org-mode))
+      (org-clone-local-variables buffer <span style="color:#e6db74">&#34;\\`org-&#34;</span>)
+      (let (strings)			<span style="color:#75715e">; Stores interactive answers.</span>
+      (save-excursion
+	(let ((regexp <span style="color:#e6db74">&#34;%\\^\\(?:{\\([^}]*\\)}\\)?\\([CgGLptTuU]\\)?&#34;</span>))
+	  (while (<span style="color:#a6e22e">re-search-forward</span> regexp <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
+	    (let* ((items (and (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">1</span>)
+			       (save-match-data
+				 (split-string (match-string-no-properties <span style="color:#ae81ff">1</span>)
+					       <span style="color:#e6db74">&#34;|&#34;</span>))))
+		   (key (match-string <span style="color:#ae81ff">2</span>))
+		   (beg (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-beginning</span> <span style="color:#ae81ff">0</span>)))
+		   (end (<span style="color:#a6e22e">copy-marker</span> (<span style="color:#a6e22e">match-end</span> <span style="color:#ae81ff">0</span>)))
+		   (prompt (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">0</span> items))
+		   (default (<span style="color:#a6e22e">nth</span> <span style="color:#ae81ff">1</span> items))
+		   (completions (<span style="color:#a6e22e">nthcdr</span> <span style="color:#ae81ff">2</span> items)))
+	      (unless (org-capture-escaped-%)
+		(<span style="color:#a6e22e">delete-region</span> beg end)
+		(<span style="color:#a6e22e">set-marker</span> beg <span style="color:#66d9ef">nil</span>)
+		(<span style="color:#a6e22e">set-marker</span> end <span style="color:#66d9ef">nil</span>)
+		(pcase key
+		  ((or <span style="color:#e6db74">&#34;G&#34;</span> <span style="color:#e6db74">&#34;g&#34;</span>)
+		   (my/set-tags))
+		  ((or <span style="color:#e6db74">&#34;C&#34;</span> <span style="color:#e6db74">&#34;L&#34;</span>)
+		   (let ((insert-fun (if (<span style="color:#a6e22e">equal</span> key <span style="color:#e6db74">&#34;C&#34;</span>) <span style="color:#a6e22e">#&#39;insert</span>
+				       (lambda (s) (org-insert-link <span style="color:#ae81ff">0</span> s)))))
+		     (pcase org-capture--clipboards
+		       (<span style="color:#f92672">`</span><span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span>)
+		       (<span style="color:#f92672">`</span>(<span style="color:#f92672">,</span>value) (<span style="color:#a6e22e">funcall</span> insert-fun value))
+		       (<span style="color:#f92672">`</span>(<span style="color:#f92672">,</span>first-value <span style="color:#f92672">.</span> <span style="color:#f92672">,</span>_)
+			(<span style="color:#a6e22e">funcall</span> insert-fun
+				 (<span style="color:#a6e22e">read-string</span> <span style="color:#e6db74">&#34;Clipboard/kill value: &#34;</span>
+					      first-value
+					      <span style="color:#e6db74">&#39;org-capture--clipboards</span>
+					      first-value)))
+		       (_ (<span style="color:#a6e22e">error</span> <span style="color:#e6db74">&#34;Invalid </span><span style="color:#e6db74">`org-capture--clipboards&#39;</span><span style="color:#e6db74"> value: %S&#34;</span>
+				 org-capture--clipboards)))))
+		  (<span style="color:#e6db74">&#34;p&#34;</span> (org-set-property prompt <span style="color:#66d9ef">nil</span>))
+		  ((or <span style="color:#e6db74">&#34;t&#34;</span> <span style="color:#e6db74">&#34;T&#34;</span> <span style="color:#e6db74">&#34;u&#34;</span> <span style="color:#e6db74">&#34;U&#34;</span>)
+		   <span style="color:#75715e">;; These are the date/time related ones.</span>
+		   (let* ((upcase? (<span style="color:#a6e22e">equal</span> (<span style="color:#a6e22e">upcase</span> key) key))
+			  (org-end-time-was-given <span style="color:#66d9ef">nil</span>)
+			  (time (org-read-date upcase? <span style="color:#66d9ef">t</span> <span style="color:#66d9ef">nil</span> prompt)))
+		     (org-insert-time-stamp
+		      time (or org-time-was-given upcase?)
+		      (<span style="color:#a6e22e">member</span> key <span style="color:#f92672">&#39;</span>(<span style="color:#e6db74">&#34;u&#34;</span> <span style="color:#e6db74">&#34;U&#34;</span>))
+		      <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> (<span style="color:#a6e22e">list</span> org-end-time-was-given))))
+		  (<span style="color:#f92672">`</span><span style="color:#66d9ef">nil</span>
+		   <span style="color:#75715e">;; Load history list for current prompt.</span>
+		   (setq org-capture--prompt-history
+			 (<span style="color:#a6e22e">gethash</span> prompt org-capture--prompt-history-table))
+		   (push (org-completing-read
+			  (<span style="color:#a6e22e">concat</span> (or prompt <span style="color:#e6db74">&#34;Enter string&#34;</span>)
+				  (and default (<span style="color:#a6e22e">format</span> <span style="color:#e6db74">&#34; [%s]&#34;</span> default))
+				  <span style="color:#e6db74">&#34;: &#34;</span>)
+			  completions
+			  <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">nil</span> <span style="color:#e6db74">&#39;org-capture--prompt-history</span> default)
+			 strings)
+		   (<span style="color:#a6e22e">insert</span> (<span style="color:#a6e22e">car</span> strings))
+		   <span style="color:#75715e">;; Save updated history list for current prompt.</span>
+		   (<span style="color:#a6e22e">puthash</span> prompt org-capture--prompt-history
+			    org-capture--prompt-history-table))
+		  (_
+		   (<span style="color:#a6e22e">error</span> <span style="color:#e6db74">&#34;Unknown template placeholder: \&#34;%%^%s\&#34;&#34;</span>
+			  key))))))))
+
+      <span style="color:#75715e">;; Replace %n escapes with nth %^{...} string.</span>
+      (setq strings (<span style="color:#a6e22e">nreverse</span> strings))
+      (save-excursion
+	(while (<span style="color:#a6e22e">re-search-forward</span> <span style="color:#e6db74">&#34;%\\\\\\([1-9][0-9]*\\)&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)
+	  (unless (org-capture-escaped-%)
+	    (<span style="color:#a6e22e">replace-match</span>
+	     (<span style="color:#a6e22e">nth</span> (<span style="color:#a6e22e">1-</span> (<span style="color:#a6e22e">string-to-number</span> (match-string <span style="color:#ae81ff">1</span>))) strings)
+	     <span style="color:#66d9ef">nil</span> <span style="color:#66d9ef">t</span>)))))
+
+      <span style="color:#75715e">;; Make sure there are no empty lines before the text, and that</span>
+      <span style="color:#75715e">;; it ends with a newline character.</span>
+      (<span style="color:#a6e22e">skip-chars-forward</span> <span style="color:#e6db74">&#34; \t\n&#34;</span>)
+      (<span style="color:#a6e22e">delete-region</span> (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">line-beginning-position</span>))
+      (<span style="color:#a6e22e">goto-char</span> (<span style="color:#a6e22e">point-max</span>))
+      (<span style="color:#a6e22e">skip-chars-backward</span> <span style="color:#e6db74">&#34; \t\n&#34;</span>)
+      (<span style="color:#a6e22e">delete-region</span> (<span style="color:#a6e22e">point</span>) (<span style="color:#a6e22e">point-max</span>))
+      (<span style="color:#a6e22e">insert</span> <span style="color:#e6db74">&#34;\n&#34;</span>)
+
+      <span style="color:#75715e">;; Return the expanded template and kill the capture buffer.</span>
+      (untabify (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">point-max</span>))
+      (<span style="color:#a6e22e">set-buffer-modified-p</span> <span style="color:#66d9ef">nil</span>)
+      (prog1 (<span style="color:#a6e22e">buffer-substring-no-properties</span> (<span style="color:#a6e22e">point-min</span>) (<span style="color:#a6e22e">point-max</span>))
+      (<span style="color:#a6e22e">kill-buffer</span> (<span style="color:#a6e22e">current-buffer</span>))))))
+
+
+<span style="color:#75715e">;;  complete from all agenda files as default behavior due to bug to the procedure</span>
+(defun counsel-org-tag ()
+  <span style="color:#e6db74">&#34;Add or remove tags in </span><span style="color:#e6db74">`org-mode&#39;</span><span style="color:#e6db74">.&#34;</span>
+  (interactive)
+  (save-excursion
+    (if (<span style="color:#a6e22e">eq</span> major-mode <span style="color:#e6db74">&#39;org-agenda-mode</span>)
+      (if org-agenda-bulk-marked-entries
+	  (setq counsel-org-tags <span style="color:#66d9ef">nil</span>)
+	(let ((hdmarker (or (org-get-at-bol <span style="color:#e6db74">&#39;org-hd-marker</span>)
+			    (org-agenda-error))))
+	  (with-current-buffer (<span style="color:#a6e22e">marker-buffer</span> hdmarker)
+	    (<span style="color:#a6e22e">goto-char</span> hdmarker)
+	    (setq counsel-org-tags
+		  (split-string (org-get-tags-string) <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#66d9ef">t</span>)))))
+      (unless (org-at-heading-p)
+      (org-back-to-heading <span style="color:#66d9ef">t</span>))
+      (setq counsel-org-tags (split-string (org-get-tags-string) <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#66d9ef">t</span>)))
+    (let ((org-setting-tags <span style="color:#66d9ef">t</span>)
+	(org-last-tags-completion-table
+	 (<span style="color:#a6e22e">append</span> org-tag-persistent-alist
+		 (org-global-tags-completion-table
+		  (org-agenda-files)))))
+      (ivy-read (counsel-org-tag-prompt)
+	      (lambda (str <span style="color:#66d9ef">&amp;rest</span> _unused)
+		(delete-dups
+		 (<span style="color:#a6e22e">all-completions</span> str <span style="color:#e6db74">&#39;org-tags-completion-function</span>)))
+	      :history <span style="color:#e6db74">&#39;org-tags-history</span>
+	      :action <span style="color:#e6db74">&#39;counsel-org-tag-action</span>
+	      :caller <span style="color:#e6db74">&#39;counsel-org-tag</span>))))
+
+(defun my/set-tags (<span style="color:#66d9ef">&amp;optional</span> v1 v2)
+     (interactive <span style="color:#e6db74">&#34;P&#34;</span>)
+     (counsel-org-tag))
+
+(<span style="color:#a6e22e">fset</span> <span style="color:#e6db74">&#39;org-set-tags-command</span> <span style="color:#e6db74">&#39;my/set-tags</span>)
+
+(provide <span style="color:#e6db74">&#39;org-fix-capture-counsel</span>)
+</code></pre></div>
+
+
+        <div class="footer">
+    Powered by <a href="https://gohugo.io/">Hugo</a> with
+    <a href="https://github.com/mrmierzejewski/hugo-theme-console/">Console Theme</a>. 
+</div>
+
+    </div>
+  </body>
+</html>

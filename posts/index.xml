@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Mohamed Aziz Knani (محمد عزيز الكناني) website</title>
+    <link>https://aziz.tn/posts/</link>
+    <description>Recent content in Posts on Mohamed Aziz Knani (محمد عزيز الكناني) website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 23 Nov 2020 00:00:00 +0100</lastBuildDate><atom:link href="https://aziz.tn/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cybertalents reverse engineering problems solutions</title>
+      <link>https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/</link>
+      <pubDate>Mon, 23 Nov 2020 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/</guid>
+      <description>I don&amp;rsquo;t present solutions for all problems, most of these are just some notes with high level ideas on how I solved them, I leave solving the problems as an exercise to the reader.
+  The Cybertalents reverse ctf had a couple of nice problems, I had two remaining problems one windows keylogger shit for which I was to lazy to write a program to decrypt the flag file since windows crypto api is not fun to be honest, well I googled how to use this windows bcrypt (not to be confused with the password hashing function, this is some Microsoft thing), and I find this 500 line code example, well I wouldn&amp;rsquo;t want to spend time on that 😂.</description>
+    </item>
+    
+    <item>
+      <title>Bsides 2020, chameleon reverse engineering writeup</title>
+      <link>https://aziz.tn/posts/bsides-2020-chameleon-reverse-engineering-writeup/</link>
+      <pubDate>Thu, 09 Apr 2020 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/bsides-2020-chameleon-reverse-engineering-writeup/</guid>
+      <description>This was originally published on sousse.love
+Introduction BsidesSF had really really good reverse engineering challenges, but I loved two challenges. One windows reverse challenge called chameleon and another esp32 firmware reverse challenge called smart-locky which I didn&amp;rsquo;t manage to solve in time.
+The challenge Problem statement We are given two files chameleon.exe and flag.png.enc, this looks trivial enough we need to reverse the encryption algorithm to give us the original flag.</description>
+    </item>
+    
+    <item>
+      <title>Splatter calc tamuctf2020, reverse engineering writeup</title>
+      <link>https://aziz.tn/posts/tamuctf2020-splatter-calc-reverse-engineering-writeup/</link>
+      <pubDate>Thu, 09 Apr 2020 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/tamuctf2020-splatter-calc-reverse-engineering-writeup/</guid>
+      <description>This was originally published on sousse.love
+Introduction We played tamuctf 2020, it was a 10-day-long beginner to intermediate level ctf, 20 teams solved all the problems, we didn&amp;rsquo;t solve all the problems unfortunately, and we ended in rank 25.
+The reverse problems were simple/okay-ish, most of them are in rust.
+The challenge This writeup is about a problem called splatter calc, it&amp;rsquo;s a rust binary that asks for an initial rng</description>
+    </item>
+    
+    <item>
+      <title>Export chrome bookmarks to org</title>
+      <link>https://aziz.tn/posts/export-chrome-bookmarks-to-org/</link>
+      <pubDate>Tue, 10 Dec 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/export-chrome-bookmarks-to-org/</guid>
+      <description>Simple code to parse chrome bookmarks output, and spit it to an org file.
+(spit BOOKMARKSFILEORG (let [file (slurp BOOKMARKSFILEHTML) hickorystuff (-&amp;gt; file h/parse h/as-hickory)] (clojure.string/join &amp;#34;\n&amp;#34; (map (fn [x] (let [content (:content x) link (-&amp;gt; x :attrs :href)] (format &amp;#34;* [[%s][%s]]&amp;#34; link (clojure.string/replace (first content) #&amp;#34;\[|\]&amp;#34; {&amp;#34;[&amp;#34; &amp;#34;{&amp;#34; &amp;#34;]&amp;#34; &amp;#34;}&amp;#34;})))) (hs/select (hs/tag :a) hickorystuff))))) </description>
+    </item>
+    
+    <item>
+      <title>Some of my ghidra scripts</title>
+      <link>https://aziz.tn/posts/some-of-my-ghidra-scripts/</link>
+      <pubDate>Tue, 10 Dec 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/some-of-my-ghidra-scripts/</guid>
+      <description>AllCyclomaticComplexity.java This a script to calculate the cyclomatic complexity of all the functions, as the name implies the metric is correlated with function complexity, it is the sum of unique paths within the CFG. You can read more about it here.
+Ghidra offers the functionality actually, this is just a wrapper to loop over all functions and sort them. What is nice about the ghidra console is when you print a function name you can click it.</description>
+    </item>
+    
+    <item>
+      <title>Cryptopals - set3</title>
+      <link>https://aziz.tn/posts/cryptopals-solutions-set3/</link>
+      <pubDate>Mon, 17 Jun 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/cryptopals-solutions-set3/</guid>
+      <description>Challenge 17 Attacking CBC with a padding attack was fascinating, here is my solution
+from set2 import aes_cbc_decrypt, aes_cbc_encrypt, paddpkcs7, validatepkcs7, split_blocks from Crypto import Random from Crypto.Util.strxor import strxor def get_block(text, block, blocksize): return split_blocks(text, blocksize)[block] def produce_ciphertext(plaintext, key): blocksize = len(key) iv = Random.new().read(blocksize) return iv + aes_cbc_encrypt(paddpkcs7(plaintext, blocksize), key, iv) def cbc_padding_oracle(ciphertext, key): blocksize = len(key) iv = ciphertext[:blocksize] return validatepkcs7(aes_cbc_decrypt(ciphertext[blocksize:], key, iv)) def break_cbc_padding_oracle(oracle, ciphertext, blocksize=16): plaintext_block = &amp;#34;&amp;#34; plaintext = &amp;#34;&amp;#34; prefix = &amp;#34;&amp;#34; for block_counter in range(1, len(split_blocks(ciphertext, blocksize))): current_block = get_block(ciphertext, block_counter, blocksize) last_block = get_block(ciphertext, block_counter-1, blocksize) for j in range(blocksize-1, -1, -1): for i in range(255)[::-1]: guessed_block = strxor(last_block, (&amp;#34;\x00&amp;#34; * j) + chr(i) + strxor(plaintext_block, (chr((blocksize - j)))*len(plaintext_block))) if oracle(prefix + guessed_block + current_block): plaintext_block = chr(i ^ (blocksize - j)) + plaintext_block break plaintext += plaintext_block plaintext_block = &amp;#34;&amp;#34; prefix += last_block return plaintext Challenge 18 In this challenge, you implement CTR mode which turns a block cipher into a stream cipher.</description>
+    </item>
+    
+    <item>
+      <title>Software development rants</title>
+      <link>https://aziz.tn/posts/ranting-about-software-development/</link>
+      <pubDate>Tue, 04 Jun 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/ranting-about-software-development/</guid>
+      <description>I work in cybersecurity. I do some programming, but I&amp;rsquo;m not a professional programmer. I took some software design classes in university. Hated them. I love programming just not how enterprise programs are designed:
+ Backend web developers write wrappers around databases. Frontend web developers write wrappers around wrappers around databases. Most programmers don&amp;rsquo;t really understand databases. Programming is a craft not a science, and that&amp;rsquo;s a problem. This allows for opinions not facts.</description>
+    </item>
+    
+    <item>
+      <title>Stream audio with pulseaudio</title>
+      <link>https://aziz.tn/posts/stream-audio-with-pulseaudio/</link>
+      <pubDate>Fri, 01 Mar 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/stream-audio-with-pulseaudio/</guid>
+      <description>I use deezer now
+So I have my music collection in my laptop hard drive, I wanna be able to play and control music everywhere.
+For changing the current track, I use Emacs with emms and mpv, I don&amp;rsquo;t have the need to use mpd to control to my music, I can just mosh to my machine and use emacsclient.
+But how to hear the music? For me I use a solution based on pulseaudio and ffmpeg, it&amp;rsquo;s a hack but it works for now.</description>
+    </item>
+    
+    <item>
+      <title>Counsel fix org-mode tags in Emacs</title>
+      <link>https://aziz.tn/posts/counsel-fix-org-mode-tags-in-emacs/</link>
+      <pubDate>Wed, 02 Jan 2019 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/counsel-fix-org-mode-tags-in-emacs/</guid>
+      <description>Hello, another Emacs post, been using this code for probably a year so I&amp;rsquo;m sharing it.
+(defun org-capture-fill-template (&amp;amp;optional template initial annotation) &amp;#34;Fill a template and return the filled template as a string. The template may still contain \&amp;#34;%?\&amp;#34; for cursor positioning.&amp;#34; (let* ((template (or template (org-capture-get :template))) (buffer (org-capture-get :buffer)) (file (buffer-file-name (or (buffer-base-buffer buffer) buffer))) (time (let* ((c (or (org-capture-get :default-time) (current-time))) (d (decode-time c))) (if (&amp;lt; (nth 2 d) org-extend-today-until) (encode-time 0 59 23 (1- (nth 3 d)) (nth 4 d) (nth 5 d)) c))) (v-t (format-time-string (org-time-stamp-format nil) time)) (v-T (format-time-string (org-time-stamp-format t) time)) (v-u (format-time-string (org-time-stamp-format nil t) time)) (v-U (format-time-string (org-time-stamp-format t t) time)) (v-c (and kill-ring (current-kill 0))) (v-x (or (org-get-x-clipboard &amp;#39;PRIMARY) (org-get-x-clipboard &amp;#39;CLIPBOARD) (org-get-x-clipboard &amp;#39;SECONDARY) &amp;#34;&amp;#34;))	;ensure it is a string ;; `initial&amp;#39; and `annotation&amp;#39; might have been passed.</description>
+    </item>
+    
+    <item>
+      <title>How I print books</title>
+      <link>https://aziz.tn/posts/how-i-print-books/</link>
+      <pubDate>Thu, 08 Nov 2018 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/how-i-print-books/</guid>
+      <description>I tend to print books or zines on paper rather than read it from the screen (I help to kill one small tree every week), I have some tools to do make this easier.
+This is a shell script to split a pdf into chapters using the builtin bookmarks:
+#!/bin/bash  infile=$1 # input pdf outputprefix=$2 [ -e &amp;#34;$infile&amp;#34; -a -n &amp;#34;$outputprefix&amp;#34; ] || exit 1 # Invalid args pagenumbers=( $(pdftk &amp;#34;$infile&amp;#34; dump_data | grep -A1 &amp;#39;^BookmarkLevel: 1&amp;#39;| \ 	grep &amp;#39;^BookmarkPageNumber: &amp;#39; | cut -f2 -d&amp;#39; &amp;#39; | uniq) end ) for ((i=0; i &amp;lt; ${#pagenumbers[@]} - 1; ++i)); do a=${pagenumbers[i]} # start page number b=${pagenumbers[i+1]} # end page number [ &amp;#34;$b&amp;#34; = &amp;#34;end&amp;#34; ] || b=$[b-1] pdftk &amp;#34;$infile&amp;#34; cat $a-$b output &amp;#34;${outputprefix}&amp;#34;_$a-$b.</description>
+    </item>
+    
+  </channel>
+</rss>

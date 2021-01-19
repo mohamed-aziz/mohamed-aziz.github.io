@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Mohamed Aziz Knani (محمد عزيز الكناني) website/posts/cybertalents-reverse-engineering-problems-solutions/</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="all,follow">
+    <meta name="googlebot" content="index,follow,snippet,archive">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/terminal-0.7.1.min.css">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/animate-3.7.2.min.css">
+    <link rel="stylesheet" href="https://aziz.tn/hugo-theme-console/css/console.css">
+    
+      <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+       <meta property="og:title" content="Cybertalents reverse engineering problems solutions" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/" /><meta property="article:published_time" content="2020-11-23T00:00:00+01:00" />
+
+
+
+<meta name="twitter:title" content="Cybertalents reverse engineering problems solutions"/>
+<meta name="twitter:description" content="I don&rsquo;t present solutions for all problems, most of these are just some notes with high level ideas on how I solved them, I leave solving the problems as an exercise to the reader.
+  The Cybertalents reverse ctf had a couple of nice problems, I had two remaining problems one windows keylogger shit for which I was to lazy to write a program to decrypt the flag file since windows crypto api is not fun to be honest, well I googled how to use this windows bcrypt (not to be confused with the password hashing function, this is some Microsoft thing), and I find this 500 line code example, well I wouldn&rsquo;t want to spend time on that 😂."/>
+
+</head>
+<body class="terminal">
+    <div class="container">
+        <div class="terminal-nav">
+          <header class="terminal-logo">
+            <div class="logo terminal-prompt">
+              
+              
+              <a href="https://aziz.tn/" class="no-style ">Mohamed Aziz Knani (محمد عزيز الكناني) website</a>:~# 
+              <a href='https://aziz.tn/posts'>posts</a>/<a href='https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions'>cybertalents-reverse-engineering-problems-solutions</a>/</div></header>
+          <nav class="terminal-menu">
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                <li><a href="https://aziz.tn/about/" typeof="ListItem">about/</a></li>
+                
+                <li><a href="https://aziz.tn/posts/" typeof="ListItem">posts/</a></li>
+                
+            </ul>
+          </nav>
+        </div>
+    </div>
+
+    <div class="container animated fadeInDown fast" >
+        
+<h1>Cybertalents reverse engineering problems solutions</h1>
+
+Nov. 23, 2020
+
+
+<br/><br/>
+<p>I don&rsquo;t present solutions for all problems, most of these are just some notes with high level ideas on how I solved them, I leave solving the problems as an exercise to the reader.</p>
+<figure>
+    <img src="/ctfcybertalents/Em3dkMbXYAMz8YA-md.jpeg"/> 
+</figure>
+
+<p>The Cybertalents reverse ctf had a couple of nice problems, I had two remaining problems one  windows keylogger shit for which I was to lazy to write a program to decrypt the flag file since windows crypto api is not fun to be honest, well I googled how to use this windows bcrypt (not to be confused with the password hashing function, this is some Microsoft thing), and I find this 500 line code example, well I wouldn&rsquo;t want to spend time on that 😂. And another word macro shit, which I had no experience in and I didn&rsquo;t bother doing.</p>
+<p>The only problem with this ctf, is that there a lot of recycled or straight reused problems, which maybe gave other players an advantage over me, since I don&rsquo;t do problems on that site.</p>
+<h2 id="solution-for-curiosity">Solution for Curiosity</h2>
+<p>Simple VM, it uses 4 general purpose registers with a couple of instructions, mul, not, add, load immediate, load from register, syscall (does some read and write), and conditional jump instruction, many ways to reverse this, you could for example build a dis-assembler for the code and integrate it in binary ninja for example to see some nice CFG&rsquo;s but that won&rsquo;t be very useful for this problem since, control flow is only used once in the program, for me I chose to build an intel pin tool to print a log. I just run the program with the tool, and enter some random input, and then like figure out what the algorithm does, finally it&rsquo;s trivial to solve using z3:</p>
+<p>Here is my pintool:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;pin.H&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;fstream&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">using</span> <span style="color:#66d9ef">namespace</span> std;
+
+KNOB<span style="color:#f92672">&lt;</span>string<span style="color:#f92672">&gt;</span> KnobOutputFile(KNOB_MODE_WRITEONCE, <span style="color:#e6db74">&#34;pintool&#34;</span>, <span style="color:#e6db74">&#34;o&#34;</span>, <span style="color:#e6db74">&#34;pin.out&#34;</span>,
+			  <span style="color:#e6db74">&#34;specify output file name&#34;</span>);
+ofstream outFile;
+ADDRINT l, h;
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">lolbro</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rax;
+  PIN_GetContextRegval(ctx, REG_RAX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rax));
+
+  <span style="color:#66d9ef">int</span> pc <span style="color:#f92672">=</span> rax.dword[<span style="color:#ae81ff">0</span>];
+
+  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> reg1, reg2, reg3, reg4;
+  PIN_SafeCopy(<span style="color:#f92672">&amp;</span> reg1, (<span style="color:#66d9ef">void</span><span style="color:#f92672">*</span>)<span style="color:#ae81ff">0x555555756488</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
+  PIN_SafeCopy(<span style="color:#f92672">&amp;</span> reg2, (<span style="color:#66d9ef">void</span><span style="color:#f92672">*</span>)<span style="color:#ae81ff">0x555555756484</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
+  PIN_SafeCopy(<span style="color:#f92672">&amp;</span> reg3, (<span style="color:#66d9ef">void</span><span style="color:#f92672">*</span>)<span style="color:#ae81ff">0x555555756482</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
+  PIN_SafeCopy(<span style="color:#f92672">&amp;</span> reg4, (<span style="color:#66d9ef">void</span><span style="color:#f92672">*</span>)<span style="color:#ae81ff">0x555555756486</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
+
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;PC: 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> pc <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; REG1: 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> reg1 <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; REG2: 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> reg2 <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; REG3: 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> reg3 <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; REG4: 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> reg4 <span style="color:#f92672">&lt;&lt;</span> endl;
+
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">INS1</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rdx, rcx;
+  PIN_GetContextRegval(ctx, REG_RCX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rcx)); <span style="color:#75715e">// register offset
+</span><span style="color:#75715e"></span>  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx)); <span style="color:#75715e">// value
+</span><span style="color:#75715e"></span>
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;MEMSTORE: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rcx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; = 0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> hex <span style="color:#f92672">&lt;&lt;</span> <span style="color:#f92672">+</span>rdx.byte[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">get_register_number_by_address</span>(<span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> address) {
+  <span style="color:#66d9ef">switch</span> (address)
+    {
+    <span style="color:#66d9ef">case</span> <span style="color:#ae81ff">0x555555756488</span><span style="color:#f92672">:</span>
+      <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>;
+    <span style="color:#66d9ef">case</span> <span style="color:#ae81ff">0x555555756486</span><span style="color:#f92672">:</span>
+      <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">4</span>;
+    <span style="color:#66d9ef">case</span> <span style="color:#ae81ff">0x555555756484</span><span style="color:#f92672">:</span>
+      <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">2</span>;
+    <span style="color:#66d9ef">case</span> <span style="color:#ae81ff">0x555555756482</span><span style="color:#f92672">:</span>
+      <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">3</span>;
+    <span style="color:#66d9ef">default</span><span style="color:#f92672">:</span>
+      std<span style="color:#f92672">::</span>cerr <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;oy there&#39;s an error bro&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+      exit(<span style="color:#ae81ff">0xff</span>);
+    }
+
+
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">INS2</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rdx, rcx;
+  PIN_GetContextRegval(ctx, REG_RCX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rcx)); <span style="color:#75715e">// store register offset
+</span><span style="color:#75715e"></span>  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx)); <span style="color:#75715e">// load register offset
+</span><span style="color:#75715e"></span>  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;REGSTORE: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rcx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; = REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> get_register_number_by_address(rdx.qword[<span style="color:#ae81ff">0</span>]) <span style="color:#f92672">&lt;&lt;</span> endl;
+
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">ADD</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rsi, rdx;
+  PIN_GetContextRegval(ctx, REG_RSI, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rsi)); <span style="color:#75715e">// store register offset
+</span><span style="color:#75715e"></span>  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx)); <span style="color:#75715e">// memory value
+</span><span style="color:#75715e"></span>  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;ADD: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rsi.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; += &#34;</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> rdx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">NOT</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rax;
+  PIN_GetContextRegval(ctx, REG_RAX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rax)); <span style="color:#75715e">// register
+</span><span style="color:#75715e"></span>
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;NOT: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#f92672">+</span>rax.byte[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; = ~REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#f92672">+</span>rax.byte[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;&lt;</span> endl;
+
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">MUL</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  PIN_REGISTER rsi, rdx;
+  PIN_GetContextRegval(ctx, REG_RSI, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rsi));
+  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx));
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;MUL: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rsi.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; *= &#34;</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;0x&#34;</span> <span style="color:#f92672">&lt;&lt;</span> rdx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">INPUT</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;  INPUT&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">OUTPUT</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;  OUTPUT&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">XIT</span>(CONTEXT<span style="color:#f92672">*</span> ctx) {
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;XIT&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">REG_ADD_1</span>(CONTEXT<span style="color:#f92672">*</span> ctx ) {
+  PIN_REGISTER rdx;
+  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx));
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;REGADD: REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rdx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; += &#34;</span>;
+}
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">REG_ADD_2</span>(CONTEXT<span style="color:#f92672">*</span> ctx ) {
+  PIN_REGISTER rdx;
+  PIN_GetContextRegval(ctx, REG_RDX, <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>UINT8 <span style="color:#f92672">*&gt;</span>(<span style="color:#f92672">&amp;</span>rdx));
+  outFile <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;REG&#34;</span> <span style="color:#f92672">&lt;&lt;</span> (<span style="color:#66d9ef">int</span>) ((rdx.dword[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">&lt;&lt;</span> endl;
+}
+
+VOID <span style="color:#a6e22e">callback_instruction</span>(INS ins, VOID <span style="color:#f92672">*</span>v) {
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554CBD</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)lolbro, IARG_CONTEXT,
+		 IARG_END);
+  }
+
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554914</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)INS1, IARG_CONTEXT,
+		 IARG_END);
+  }
+
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x55555555499C</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)INS2, IARG_CONTEXT,
+		 IARG_END);
+  }
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554AC0</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ADD, IARG_CONTEXT,
+		 IARG_END);
+  }
+
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554B9E</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)NOT, IARG_CONTEXT,
+		 IARG_END);
+  }
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554B58</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)MUL, IARG_CONTEXT,
+		 IARG_END);
+  }
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554866</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)INPUT, IARG_CONTEXT,
+		 IARG_END);
+  }
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554874</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)OUTPUT, IARG_CONTEXT,
+		 IARG_END);
+  }
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554893</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)XIT, IARG_CONTEXT,
+		 IARG_END);
+  }
+
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x5555555549FA</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)REG_ADD_1, IARG_CONTEXT,
+		 IARG_END);
+
+  }
+
+  <span style="color:#66d9ef">if</span> (INS_Address(ins) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x555555554A1D</span>) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)REG_ADD_2, IARG_CONTEXT,
+		 IARG_END);
+  }
+
+
+}
+
+VOID <span style="color:#a6e22e">fini</span>(INT32 code, VOID <span style="color:#f92672">*</span>v) { outFile.close(); }
+
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[]) {
+  <span style="color:#66d9ef">if</span> (PIN_Init(argc, argv)) {
+    perror(<span style="color:#e6db74">&#34;init&#34;</span>);
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+  }
+  outFile.open(KnobOutputFile.Value().c_str());
+  INS_AddInstrumentFunction(callback_instruction, <span style="color:#ae81ff">0</span>);
+  PIN_AddFiniFunction(fini, <span style="color:#ae81ff">0</span>);
+  PIN_StartProgram();
+  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+</code></pre></div><p>I just run the program with this tool, and then like solve the constraints with a z3 script:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> z3
+s <span style="color:#f92672">=</span> z3<span style="color:#f92672">.</span>Solver()
+x <span style="color:#f92672">=</span> [z3<span style="color:#f92672">.</span>BitVec(<span style="color:#e6db74">&#34;x_{}&#34;</span><span style="color:#f92672">.</span>format(i), <span style="color:#ae81ff">8</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">22</span>)]
+<span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> x:
+    s<span style="color:#f92672">.</span>add(z3<span style="color:#f92672">.</span>And(
+	  c <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0x20</span>,
+	  c <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0x7f</span>))
+
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x173 REG1: 0x46 REG2: 0xff20 REG3: 0xff20002d REG4: 0x460000
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x74
+</span><span style="color:#e6db74">PC: 0x176 REG1: 0x46 REG2: 0xff20 REG3: 0xff200074 REG4: 0x460000
+</span><span style="color:#e6db74">ADD: REG3 += 0x45
+</span><span style="color:#e6db74">PC: 0x179 REG1: 0x46 REG2: 0xff20 REG3: 0xff2000b9 REG4: 0x460000
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x17a REG1: 0xff REG2: 0xff20 REG3: 0xff2000b9 REG4: 0xff0000
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x17b REG1: 0xff00 REG2: 0xff20 REG3: 0xff2000b9 REG4: 0xff000000
+</span><span style="color:#e6db74">ADD: REG1 += 0x110
+</span><span style="color:#e6db74">PC: 0x17e REG1: 0x10 REG2: 0xff20 REG3: 0xff2000b9 REG4: 0x100000
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x17f REG1: 0x10 REG2: 0x10ff20 REG3: 0xff2000b9 REG4: 0x100010
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x182 REG1: 0x0 REG2: 0x10ff20 REG3: 0xff2000b9 REG4: 0x10
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+
+s<span style="color:#f92672">.</span>add((<span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x74</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x45</span>))<span style="color:#f92672">+</span><span style="color:#ae81ff">0x110</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#75715e">#FLAG{VGHIJKLMNOPQRSTUVWXYZ[</span>
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x183 REG1: 0x47 REG2: 0xff20 REG3: 0xff2000b9 REG4: 0x470000
+</span><span style="color:#e6db74">MUL: REG1 *= 0x3c
+</span><span style="color:#e6db74">PC: 0x186 REG1: 0x10a4 REG2: 0xff20 REG3: 0xff2000b9 REG4: 0x10a40000
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x59
+</span><span style="color:#e6db74">PC: 0x189 REG1: 0x10a4 REG2: 0xff20 REG3: 0xff200059 REG4: 0x10a40000
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x18a REG1: 0x10fd REG2: 0xff20 REG3: 0xff200059 REG4: 0x10fd0000
+</span><span style="color:#e6db74">ADD: REG1 += 0xed9b
+</span><span style="color:#e6db74">PC: 0x18d REG1: 0xfe98 REG2: 0xff20 REG3: 0xff200059 REG4: 0xfe980000
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x18e REG1: 0xfe98 REG2: 0xfe98ff20 REG3: 0xff200059 REG4: 0xfe98fe98
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x191 REG1: 0x0 REG2: 0xfe98ff20 REG3: 0xff200059 REG4: 0xfe98
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">*</span> <span style="color:#ae81ff">0x3c</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x59</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xed9b</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x192 REG1: 0x48 REG2: 0xfe98ff20 REG3: 0xff200059 REG4: 0x48fe98
+</span><span style="color:#e6db74">MUL: REG1 *= 0x30
+</span><span style="color:#e6db74">PC: 0x195 REG1: 0xd80 REG2: 0xfe98ff20 REG3: 0xff200059 REG4: 0xd80fe98
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x3b
+</span><span style="color:#e6db74">PC: 0x198 REG1: 0xd80 REG2: 0xfe98ff20 REG3: 0xff20003b REG4: 0xd80fe98
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x199 REG1: 0xdbb REG2: 0xfe98ff20 REG3: 0xff20003b REG4: 0xdbbfe98
+</span><span style="color:#e6db74">ADD: REG1 += 0xedf5
+</span><span style="color:#e6db74">PC: 0x19c REG1: 0xfbb0 REG2: 0xfe98ff20 REG3: 0xff20003b REG4: 0xfbb0fe98
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x19d REG1: 0xfbb0 REG2: 0xfa48ff20 REG3: 0xff20003b REG4: 0xfbb0fa48
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1a0 REG1: 0x0 REG2: 0xfa48ff20 REG3: 0xff20003b REG4: 0xfa48
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">*</span> <span style="color:#ae81ff">0x30</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x3b</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xf5</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1a1 REG1: 0x49 REG2: 0xfa48ff20 REG3: 0xff20003b REG4: 0x49fa48
+</span><span style="color:#e6db74">MUL: REG1 *= 0x9
+</span><span style="color:#e6db74">PC: 0x1a4 REG1: 0x291 REG2: 0xfa48ff20 REG3: 0xff20003b REG4: 0x291fa48
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x21
+</span><span style="color:#e6db74">PC: 0x1a7 REG1: 0x291 REG2: 0xfa48ff20 REG3: 0xff200021 REG4: 0x291fa48
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1a8 REG1: 0x2b2 REG2: 0xfa48ff20 REG3: 0xff200021 REG4: 0x2b2fa48
+</span><span style="color:#e6db74">ADD: REG1 += 0xfd96
+</span><span style="color:#e6db74">PC: 0x1ab REG1: 0x48 REG2: 0xfa48ff20 REG3: 0xff200021 REG4: 0x48fa48
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1ac REG1: 0x48 REG2: 0xfa90ff20 REG3: 0xff200021 REG4: 0x48fa90
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1af REG1: 0x0 REG2: 0xfa90ff20 REG3: 0xff200021 REG4: 0xfa90
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">*</span> <span style="color:#ae81ff">0x9</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x21</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x96</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1b0 REG1: 0x4a REG2: 0xfa90ff20 REG3: 0xff200021 REG4: 0x4afa90
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x92
+</span><span style="color:#e6db74">PC: 0x1b3 REG1: 0x4a REG2: 0xfa90ff20 REG3: 0xff20ff92 REG4: 0x4afa90
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1b4 REG1: 0xffdc REG2: 0xfa90ff20 REG3: 0xff20ff92 REG4: 0xffdcfa90
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1b5 REG1: 0xffdc REG2: 0xfa6cff20 REG3: 0xff20ff92 REG4: 0xffdcfa6c
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1b8 REG1: 0x0 REG2: 0xfa6cff20 REG3: 0xff20ff92 REG4: 0xfa6c
+</span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x92</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1b9 REG1: 0x4b REG2: 0xfa6cff20 REG3: 0xff20ff92 REG4: 0x4bfa6c
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x9f
+</span><span style="color:#e6db74">PC: 0x1bc REG1: 0x4b REG2: 0xfa6cff20 REG3: 0xff20ff9f REG4: 0x4bfa6c
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1bd REG1: 0xffea REG2: 0xfa6cff20 REG3: 0xff20ff9f REG4: 0xffeafa6c
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1be REG1: 0xffea REG2: 0xfa56ff20 REG3: 0xff20ff9f REG4: 0xffeafa56
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1c1 REG1: 0x0 REG2: 0xfa56ff20 REG3: 0xff20ff9f REG4: 0xfa56&#34;&#34;&#34;</span>
+
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">5</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x9f</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1c2 REG1: 0x4c REG2: 0xfa56ff20 REG3: 0xff20ff9f REG4: 0x4cfa56
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x6a
+</span><span style="color:#e6db74">PC: 0x1c5 REG1: 0x4c REG2: 0xfa56ff20 REG3: 0xff20006a REG4: 0x4cfa56
+</span><span style="color:#e6db74">ADD: REG3 += 0x38
+</span><span style="color:#e6db74">PC: 0x1c8 REG1: 0x4c REG2: 0xfa56ff20 REG3: 0xff2000a2 REG4: 0x4cfa56
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1c9 REG1: 0xee REG2: 0xfa56ff20 REG3: 0xff2000a2 REG4: 0xeefa56
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x1ca REG1: 0xff11 REG2: 0xfa56ff20 REG3: 0xff2000a2 REG4: 0xff11fa56
+</span><span style="color:#e6db74">ADD: REG1 += 0x10f
+</span><span style="color:#e6db74">PC: 0x1cd REG1: 0x20 REG2: 0xfa56ff20 REG3: 0xff2000a2 REG4: 0x20fa56
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1ce REG1: 0x20 REG2: 0xfa76ff20 REG3: 0xff2000a2 REG4: 0x20fa76
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1d1 REG1: 0x0 REG2: 0xfa76ff20 REG3: 0xff2000a2 REG4: 0xfa76&#34;&#34;&#34;</span>
+
+s<span style="color:#f92672">.</span>add(<span style="color:#f92672">~</span>(<span style="color:#ae81ff">0x6a</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x38</span> <span style="color:#f92672">+</span> x[<span style="color:#ae81ff">6</span>]) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x10f</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1d2 REG1: 0x4d REG2: 0xfa76ff20 REG3: 0xff2000a2 REG4: 0x4dfa76
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x87
+</span><span style="color:#e6db74">PC: 0x1d5 REG1: 0x4d REG2: 0xfa76ff20 REG3: 0xff20ff87 REG4: 0x4dfa76
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1d6 REG1: 0xffd4 REG2: 0xfa76ff20 REG3: 0xff20ff87 REG4: 0xffd4fa76
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1d7 REG1: 0xffd4 REG2: 0xfa4aff20 REG3: 0xff20ff87 REG4: 0xffd4fa4a
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1da REG1: 0x0 REG2: 0xfa4aff20 REG3: 0xff20ff87 REG4: 0xfa4a&#34;&#34;&#34;</span>
+
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">7</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x87</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1db REG1: 0x4e REG2: 0xfa4aff20 REG3: 0xff20ff87 REG4: 0x4efa4a
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x8d
+</span><span style="color:#e6db74">PC: 0x1de REG1: 0x4e REG2: 0xfa4aff20 REG3: 0xff20ff8d REG4: 0x4efa4a
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1df REG1: 0xffdb REG2: 0xfa4aff20 REG3: 0xff20ff8d REG4: 0xffdbfa4a
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1e0 REG1: 0xffdb REG2: 0xfa25ff20 REG3: 0xff20ff8d REG4: 0xffdbfa25
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1e3 REG1: 0x0 REG2: 0xfa25ff20 REG3: 0xff20ff8d REG4: 0xfa25&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(x[<span style="color:#ae81ff">8</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x8d</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1e4 REG1: 0x4f REG2: 0xfa25ff20 REG3: 0xff20ff8d REG4: 0x4ffa25
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x38
+</span><span style="color:#e6db74">PC: 0x1e7 REG1: 0x4f REG2: 0xfa25ff20 REG3: 0xff200038 REG4: 0x4ffa25
+</span><span style="color:#e6db74">ADD: REG3 += 0x4f
+</span><span style="color:#e6db74">PC: 0x1ea REG1: 0x4f REG2: 0xfa25ff20 REG3: 0xff200087 REG4: 0x4ffa25
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1eb REG1: 0xd6 REG2: 0xfa25ff20 REG3: 0xff200087 REG4: 0xd6fa25
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x1ec REG1: 0xff29 REG2: 0xfa25ff20 REG3: 0xff200087 REG4: 0xff29fa25
+</span><span style="color:#e6db74">ADD: REG1 += 0xf1
+</span><span style="color:#e6db74">PC: 0x1ef REG1: 0x1a REG2: 0xfa25ff20 REG3: 0xff200087 REG4: 0x1afa25
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x1f0 REG1: 0x1a REG2: 0xfa3fff20 REG3: 0xff200087 REG4: 0x1afa3f
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x1f3 REG1: 0x0 REG2: 0xfa3fff20 REG3: 0xff200087 REG4: 0xfa3f&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(<span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">9</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x38</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x4f</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xf1</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x1f4 REG1: 0x50 REG2: 0xfa3fff20 REG3: 0xff200087 REG4: 0x50fa3f
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x60
+</span><span style="color:#e6db74">PC: 0x1f7 REG1: 0x50 REG2: 0xfa3fff20 REG3: 0xff200060 REG4: 0x50fa3f
+</span><span style="color:#e6db74">ADD: REG3 += 0x61
+</span><span style="color:#e6db74">PC: 0x1fa REG1: 0x50 REG2: 0xfa3fff20 REG3: 0xff2000c1 REG4: 0x50fa3f
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x1fb REG1: 0x111 REG2: 0xfa3fff20 REG3: 0xff2000c1 REG4: 0x111fa3f
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x1fc REG1: 0xfeee REG2: 0xfa3fff20 REG3: 0xff2000c1 REG4: 0xfeeefa3f
+</span><span style="color:#e6db74">ADD: REG1 += 0x135
+</span><span style="color:#e6db74">PC: 0x1ff REG1: 0x23 REG2: 0xfa3fff20 REG3: 0xff2000c1 REG4: 0x23fa3f
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x200 REG1: 0x23 REG2: 0xfa62ff20 REG3: 0xff2000c1 REG4: 0x23fa62
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x203 REG1: 0x0 REG2: 0xfa62ff20 REG3: 0xff2000c1 REG4: 0xfa62&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">10</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x60</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x61</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x135</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x204 REG1: 0x51 REG2: 0xfa62ff20 REG3: 0xff2000c1 REG4: 0x51fa62
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x5b
+</span><span style="color:#e6db74">PC: 0x207 REG1: 0x51 REG2: 0xfa62ff20 REG3: 0xff20005b REG4: 0x51fa62
+</span><span style="color:#e6db74">ADD: REG3 += 0x5e
+</span><span style="color:#e6db74">PC: 0x20a REG1: 0x51 REG2: 0xfa62ff20 REG3: 0xff2000b9 REG4: 0x51fa62
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x20b REG1: 0x10a REG2: 0xfa62ff20 REG3: 0xff2000b9 REG4: 0x10afa62
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x20c REG1: 0xfef5 REG2: 0xfa62ff20 REG3: 0xff2000b9 REG4: 0xfef5fa62
+</span><span style="color:#e6db74">ADD: REG1 += 0x119
+</span><span style="color:#e6db74">PC: 0x20f REG1: 0xe REG2: 0xfa62ff20 REG3: 0xff2000b9 REG4: 0xefa62
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x210 REG1: 0xe REG2: 0xfa70ff20 REG3: 0xff2000b9 REG4: 0xefa70
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x213 REG1: 0x0 REG2: 0xfa70ff20 REG3: 0xff2000b9 REG4: 0xfa70&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">11</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x5b</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x5e</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x119</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x214 REG1: 0x52 REG2: 0xfa70ff20 REG3: 0xff2000b9 REG4: 0x52fa70
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x48
+</span><span style="color:#e6db74">PC: 0x217 REG1: 0x52 REG2: 0xfa70ff20 REG3: 0xff200048 REG4: 0x52fa70
+</span><span style="color:#e6db74">ADD: REG3 += 0x32
+</span><span style="color:#e6db74">PC: 0x21a REG1: 0x52 REG2: 0xfa70ff20 REG3: 0xff20007a REG4: 0x52fa70
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x21b REG1: 0xcc REG2: 0xfa70ff20 REG3: 0xff20007a REG4: 0xccfa70
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x21c REG1: 0xff33 REG2: 0xfa70ff20 REG3: 0xff20007a REG4: 0xff33fa70
+</span><span style="color:#e6db74">ADD: REG1 += 0xe4
+</span><span style="color:#e6db74">PC: 0x21f REG1: 0x17 REG2: 0xfa70ff20 REG3: 0xff20007a REG4: 0x17fa70
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x220 REG1: 0x17 REG2: 0xfa87ff20 REG3: 0xff20007a REG4: 0x17fa87
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x223 REG1: 0x0 REG2: 0xfa87ff20 REG3: 0xff20007a REG4: 0xfa87&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">12</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x48</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x32</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xe4</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x224 REG1: 0x53 REG2: 0xfa87ff20 REG3: 0xff20007a REG4: 0x53fa87
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x8d
+</span><span style="color:#e6db74">PC: 0x227 REG1: 0x53 REG2: 0xfa87ff20 REG3: 0xff20ff8d REG4: 0x53fa87
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x228 REG1: 0xffe0 REG2: 0xfa87ff20 REG3: 0xff20ff8d REG4: 0xffe0fa87
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x229 REG1: 0xffe0 REG2: 0xfa67ff20 REG3: 0xff20ff8d REG4: 0xffe0fa67
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x22c REG1: 0x0 REG2: 0xfa67ff20 REG3: 0xff20ff8d REG4: 0xfa67&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( x[<span style="color:#ae81ff">13</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x8d</span>  <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34;PC: 0x22d REG1: 0x54 REG2: 0xfa67ff20 REG3: 0xff20ff8d REG4: 0x54fa67
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x28
+</span><span style="color:#e6db74">PC: 0x230 REG1: 0x54 REG2: 0xfa67ff20 REG3: 0xff200028 REG4: 0x54fa67
+</span><span style="color:#e6db74">ADD: REG3 += 0x58
+</span><span style="color:#e6db74">PC: 0x233 REG1: 0x54 REG2: 0xfa67ff20 REG3: 0xff200080 REG4: 0x54fa67
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x234 REG1: 0xd4 REG2: 0xfa67ff20 REG3: 0xff200080 REG4: 0xd4fa67
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x235 REG1: 0xff2b REG2: 0xfa67ff20 REG3: 0xff200080 REG4: 0xff2bfa67
+</span><span style="color:#e6db74">ADD: REG1 += 0xe0
+</span><span style="color:#e6db74">PC: 0x238 REG1: 0xb REG2: 0xfa67ff20 REG3: 0xff200080 REG4: 0xbfa67
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x239 REG1: 0xb REG2: 0xfa72ff20 REG3: 0xff200080 REG4: 0xbfa72
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x23c REG1: 0x0 REG2: 0xfa72ff20 REG3: 0xff200080 REG4: 0xfa72&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(<span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">14</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x28</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x58</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xe0</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34;PC: 0x23d REG1: 0x55 REG2: 0xfa72ff20 REG3: 0xff200080 REG4: 0x55fa72
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x50
+</span><span style="color:#e6db74">PC: 0x240 REG1: 0x55 REG2: 0xfa72ff20 REG3: 0xff200050 REG4: 0x55fa72
+</span><span style="color:#e6db74">ADD: REG3 += 0x74
+</span><span style="color:#e6db74">PC: 0x243 REG1: 0x55 REG2: 0xfa72ff20 REG3: 0xff2000c4 REG4: 0x55fa72
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x244 REG1: 0x119 REG2: 0xfa72ff20 REG3: 0xff2000c4 REG4: 0x119fa72
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x245 REG1: 0xfee6 REG2: 0xfa72ff20 REG3: 0xff2000c4 REG4: 0xfee6fa72
+</span><span style="color:#e6db74">ADD: REG1 += 0x126
+</span><span style="color:#e6db74">PC: 0x248 REG1: 0xc REG2: 0xfa72ff20 REG3: 0xff2000c4 REG4: 0xcfa72
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x249 REG1: 0xc REG2: 0xfa7eff20 REG3: 0xff2000c4 REG4: 0xcfa7e
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x24c REG1: 0x0 REG2: 0xfa7eff20 REG3: 0xff2000c4 REG4: 0xfa7e&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add(<span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">15</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x50</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x74</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x126</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x24d REG1: 0x56 REG2: 0xfa7eff20 REG3: 0xff2000c4 REG4: 0x56fa7e
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x26
+</span><span style="color:#e6db74">PC: 0x250 REG1: 0x56 REG2: 0xfa7eff20 REG3: 0xff200026 REG4: 0x56fa7e
+</span><span style="color:#e6db74">ADD: REG3 += 0x3e
+</span><span style="color:#e6db74">PC: 0x253 REG1: 0x56 REG2: 0xfa7eff20 REG3: 0xff200064 REG4: 0x56fa7e
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x254 REG1: 0xba REG2: 0xfa7eff20 REG3: 0xff200064 REG4: 0xbafa7e
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x255 REG1: 0xff45 REG2: 0xfa7eff20 REG3: 0xff200064 REG4: 0xff45fa7e
+</span><span style="color:#e6db74">ADD: REG1 += 0xd2
+</span><span style="color:#e6db74">PC: 0x258 REG1: 0x17 REG2: 0xfa7eff20 REG3: 0xff200064 REG4: 0x17fa7e
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x259 REG1: 0x17 REG2: 0xfa95ff20 REG3: 0xff200064 REG4: 0x17fa95
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x25c REG1: 0x0 REG2: 0xfa95ff20 REG3: 0xff200064 REG4: 0xfa95&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">16</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x26</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x3e</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0xd2</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x25d REG1: 0x57 REG2: 0xfa95ff20 REG3: 0xff200064 REG4: 0x57fa95
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x5e
+</span><span style="color:#e6db74">PC: 0x260 REG1: 0x57 REG2: 0xfa95ff20 REG3: 0xff20005e REG4: 0x57fa95
+</span><span style="color:#e6db74">ADD: REG3 += 0x6a
+</span><span style="color:#e6db74">PC: 0x263 REG1: 0x57 REG2: 0xfa95ff20 REG3: 0xff2000c8 REG4: 0x57fa95
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x264 REG1: 0x11f REG2: 0xfa95ff20 REG3: 0xff2000c8 REG4: 0x11ffa95
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x265 REG1: 0xfee0 REG2: 0xfa95ff20 REG3: 0xff2000c8 REG4: 0xfee0fa95
+</span><span style="color:#e6db74">ADD: REG1 += 0x12a
+</span><span style="color:#e6db74">PC: 0x268 REG1: 0xa REG2: 0xfa95ff20 REG3: 0xff2000c8 REG4: 0xafa95
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x269 REG1: 0xa REG2: 0xfa9fff20 REG3: 0xff2000c8 REG4: 0xafa9f
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x26c REG1: 0x0 REG2: 0xfa9fff20 REG3: 0xff2000c8 REG4: 0xfa9f&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">17</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x5e</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x6a</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x12a</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x26d REG1: 0x58 REG2: 0xfa9fff20 REG3: 0xff2000c8 REG4: 0x58fa9f
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x6d
+</span><span style="color:#e6db74">PC: 0x270 REG1: 0x58 REG2: 0xfa9fff20 REG3: 0xff20006d REG4: 0x58fa9f
+</span><span style="color:#e6db74">ADD: REG3 += 0x2a
+</span><span style="color:#e6db74">PC: 0x273 REG1: 0x58 REG2: 0xfa9fff20 REG3: 0xff200097 REG4: 0x58fa9f
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x274 REG1: 0xef REG2: 0xfa9fff20 REG3: 0xff200097 REG4: 0xeffa9f
+</span><span style="color:#e6db74">NOT: REG0 = ~REG0
+</span><span style="color:#e6db74">PC: 0x275 REG1: 0xff10 REG2: 0xfa9fff20 REG3: 0xff200097 REG4: 0xff10fa9f
+</span><span style="color:#e6db74">ADD: REG1 += 0x112
+</span><span style="color:#e6db74">PC: 0x278 REG1: 0x22 REG2: 0xfa9fff20 REG3: 0xff200097 REG4: 0x22fa9f
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x279 REG1: 0x22 REG2: 0xfac1ff20 REG3: 0xff200097 REG4: 0x22fac1
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x27c REG1: 0x0 REG2: 0xfac1ff20 REG3: 0xff200097 REG4: 0xfac1&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( <span style="color:#f92672">~</span>(x[<span style="color:#ae81ff">18</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x6d</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x2a</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x112</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x27d REG1: 0x59 REG2: 0xfac1ff20 REG3: 0xff200097 REG4: 0x59fac1
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x97
+</span><span style="color:#e6db74">PC: 0x280 REG1: 0x59 REG2: 0xfac1ff20 REG3: 0xff20ff97 REG4: 0x59fac1
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x281 REG1: 0xfff0 REG2: 0xfac1ff20 REG3: 0xff20ff97 REG4: 0xfff0fac1
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x282 REG1: 0xfff0 REG2: 0xfab1ff20 REG3: 0xff20ff97 REG4: 0xfff0fab1
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x285 REG1: 0x0 REG2: 0xfab1ff20 REG3: 0xff20ff97 REG4: 0xfab1&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( x[<span style="color:#ae81ff">19</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x97</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> )
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x286 REG1: 0x5a REG2: 0xfab1ff20 REG3: 0xff20ff97 REG4: 0x5afab1
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x92
+</span><span style="color:#e6db74">PC: 0x289 REG1: 0x5a REG2: 0xfab1ff20 REG3: 0xff20ff92 REG4: 0x5afab1
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x28a REG1: 0xffec REG2: 0xfab1ff20 REG3: 0xff20ff92 REG4: 0xffecfab1
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x28b REG1: 0xffec REG2: 0xfa9dff20 REG3: 0xff20ff92 REG4: 0xffecfa9d
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x28e REG1: 0x0 REG2: 0xfa9dff20 REG3: 0xff20ff92 REG4: 0xfa9d&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( x[<span style="color:#ae81ff">20</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x92</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> )
+
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x28f REG1: 0x5b REG2: 0xfa9dff20 REG3: 0xff20ff92 REG4: 0x5bfa9d
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x99
+</span><span style="color:#e6db74">PC: 0x292 REG1: 0x5b REG2: 0xfa9dff20 REG3: 0xff20ff99 REG4: 0x5bfa9d
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x293 REG1: 0xfff4 REG2: 0xfa9dff20 REG3: 0xff20ff99 REG4: 0xfff4fa9d
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x294 REG1: 0xfff4 REG2: 0xfa91ff20 REG3: 0xff20ff99 REG4: 0xfff4fa91
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x0
+</span><span style="color:#e6db74">PC: 0x297 REG1: 0x0 REG2: 0xfa91ff20 REG3: 0xff20ff99 REG4: 0xfa91&#34;&#34;&#34;</span>
+s<span style="color:#f92672">.</span>add( x[<span style="color:#ae81ff">21</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x99</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+
+<span style="color:#e6db74">&#34;&#34;&#34; PC: 0x298 REG1: 0xa REG2: 0xfa91ff20 REG3: 0xff20ff99 REG4: 0xafa91
+</span><span style="color:#e6db74">MUL: REG1 *= 0x27
+</span><span style="color:#e6db74">PC: 0x29b REG1: 0x186 REG2: 0xfa91ff20 REG3: 0xff20ff99 REG4: 0x186fa91
+</span><span style="color:#e6db74">MEMSTORE: REG3 = 0x40
+</span><span style="color:#e6db74">PC: 0x29e REG1: 0x186 REG2: 0xfa91ff20 REG3: 0xff200040 REG4: 0x186fa91
+</span><span style="color:#e6db74">REGADD: REG1 += REG3
+</span><span style="color:#e6db74">PC: 0x29f REG1: 0x1c6 REG2: 0xfa91ff20 REG3: 0xff200040 REG4: 0x1c6fa91
+</span><span style="color:#e6db74">ADD: REG1 += 0xecb5
+</span><span style="color:#e6db74">PC: 0x2a2 REG1: 0xee7b REG2: 0xfa91ff20 REG3: 0xff200040 REG4: 0xee7bfa91
+</span><span style="color:#e6db74">REGADD: REG4 += REG1
+</span><span style="color:#e6db74">PC: 0x2a3 REG1: 0xee7b REG2: 0xe90cff20 REG3: 0xff200040 REG4: 0xee7be90c
+</span><span style="color:#e6db74">REGSTORE: REG1 = REG4
+</span><span style="color:#e6db74">PC: 0x2a4 REG1: 0xe90c REG2: 0xe90cff20 REG3: 0xff200040 REG4: 0xe90ce90c
+</span><span style="color:#e6db74">MEMSTORE: REG2 = 0x67
+</span><span style="color:#e6db74">PC: 0x2a7 REG1: 0xe90c REG2: 0xe90c0067 REG3: 0x670040 REG4: 0xe90ce90c
+</span><span style="color:#e6db74">PC: 0x67 REG1: 0xe90c REG2: 0xe90c0067 REG3: 0x670040 REG4: 0xe90ce90c
+</span><span style="color:#e6db74">MEMSTORE: REG1 = 0x1
+</span><span style="color:#e6db74">PC: 0x6a REG1: 0x1 REG2: 0xe90c0067 REG3: 0x670040 REG4: 0x1e90c
+</span><span style="color:#e6db74">MEMSTORE: REG2 = 0x19
+</span><span style="color:#e6db74">PC: 0x6d REG1: 0x1 REG2: 0xe90c0019 REG3: 0x190040 REG4: 0x1e90c
+</span><span style="color:#e6db74">ADD: REG2 += 0x3e
+</span><span style="color:#e6db74">PC: 0x70 REG1: 0x1 REG2: 0xe90c0057 REG3: 0x570040 REG4: 0x1e90c&#34;&#34;&#34;</span>
+
+
+<span style="color:#66d9ef">print</span>(s<span style="color:#f92672">.</span>check())
+<span style="color:#66d9ef">print</span>(s<span style="color:#f92672">.</span>model())
+m <span style="color:#f92672">=</span> s<span style="color:#f92672">.</span>model()
+flag <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
+<span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> x:
+    flag <span style="color:#f92672">+=</span> chr(m[c]<span style="color:#f92672">.</span>as_long())
+<span style="color:#66d9ef">print</span>(flag)
+</code></pre></div><h2 id="solution-for-handbook">Solution for Handbook</h2>
+<p>Some movfuscator shit, takes 16 bytes of input and compares it with some random string, use findcrypt, identify aes sbox, identify the key which was AAAABBBBCCCCDDDD.</p>
+<h2 id="solution-for-lim-rootkit">Solution for Lim Rootkit</h2>
+<p>Use resource hacker, dump the 2 files, xor some 2 strings and get the flag.</p>
+<h2 id="solution-for-dead-lock">Solution for Dead lock</h2>
+<p>Hardest part is finding a working tool it&rsquo;s UndertaleModtool, there is a room called secret, just replace the order of room0 and secret, save and get the flag</p>
+<h2 id="solution-for-login-if-you-can">Solution for login if you can</h2>
+<p>Chrome can disassemble wasm files, look at the data assume it&rsquo;s xor, xor data with some constant 1 byte key. Get the flag.</p>
+
+
+
+        <div class="footer">
+    Powered by <a href="https://gohugo.io/">Hugo</a> with
+    <a href="https://github.com/mrmierzejewski/hugo-theme-console/">Console Theme</a>. 
+</div>
+
+    </div>
+  </body>
+</html>
