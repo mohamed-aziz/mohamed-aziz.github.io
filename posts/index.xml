@@ -18,6 +18,16 @@ ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 |
     </item>
     
     <item>
+      <title>Simple script to automate creating databases</title>
+      <link>https://aziz.tn/posts/script-automate-creating-databases/</link>
+      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/script-automate-creating-databases/</guid>
+      <description>I use this thing at work, thought I&amp;rsquo;ll just paste it here, this will just create a database user and 3 databases for different development environments, supposes that it needs to do ssh tunneling because that&amp;rsquo;s what we do at work.
+import click import mysql.connector def ssh_tunnel(ip, username, password, port, sshport): from sshtunnel import SSHTunnelForwarder server = SSHTunnelForwarder( ip, ssh_port=sshport, ssh_username=username, ssh_password=password, remote_bind_address=(&amp;#39;127.0.0.1&amp;#39;, port) ) server.daemon_forward_servers = True server.start() return server def create_mysql_databases(prefix, local_port, user, password): env = [&amp;#34;int&amp;#34;, &amp;#34;qualif&amp;#34;, &amp;#34;test&amp;#34;] mydb = mysql.</description>
+    </item>
+    
+    <item>
       <title>Cybertalents reverse engineering problems solutions</title>
       <link>https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/</link>
       <pubDate>Mon, 23 Nov 2020 00:00:00 +0100</pubDate>
