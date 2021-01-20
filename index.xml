@@ -18,6 +18,17 @@ ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 |
     </item>
     
     <item>
+      <title>Code notes</title>
+      <link>https://aziz.tn/posts/code-notes/</link>
+      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/code-notes/</guid>
+      <description>In my code note I try to put useful stuff, I have on my computer that I can share that will be useful for other people.
+Cheap ass proxy Found this cool one-liner in stackoverflow, really useful if I need to debug something really fast and can&amp;rsquo;t bother to open wireshark:
+ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 | tee /dev/stderr&amp;#39; Simple script to automate creating databases I use this thing at work, thought I&amp;rsquo;ll just paste it here, this will just create a database user and 3 databases for different development environments, supposes that it needs to do ssh tunneling because that&amp;rsquo;s what we do at work.</description>
+    </item>
+    
+    <item>
       <title>Simple script to automate creating databases</title>
       <link>https://aziz.tn/posts/script-automate-creating-databases/</link>
       <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
