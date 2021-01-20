@@ -6,7 +6,17 @@
     <description>Recent content in Posts on Mohamed Aziz Knani (محمد عزيز الكناني) website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Nov 2020 00:00:00 +0100</lastBuildDate><atom:link href="https://aziz.tn/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 20 Jan 2021 00:00:00 +0100</lastBuildDate><atom:link href="https://aziz.tn/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cheap ass proxy</title>
+      <link>https://aziz.tn/posts/proxy-using-netcat/</link>
+      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
+      
+      <guid>https://aziz.tn/posts/proxy-using-netcat/</guid>
+      <description>Found this cool one-liner in stackoverflow, really useful if I need to debug something really fast and can&amp;rsquo;t bother to open wireshark:
+ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 | tee /dev/stderr&amp;#39; </description>
+    </item>
+    
     <item>
       <title>Cybertalents reverse engineering problems solutions</title>
       <link>https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/</link>
