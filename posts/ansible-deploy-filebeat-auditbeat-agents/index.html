@@ -26,8 +26,8 @@
 <meta name="twitter:title" content="Using ansible to deploy filebeat and auditbeat agents"/>
 <meta name="twitter:description" content="I manage a SIEM for work, and regularly my company adds new client servers, to automate deploying filebeat and auditbeat agents, I just use ansible playbooks for that, saves me tones of time.
 It&rsquo;s pretty simple really I just use geerlingguy roles:
----- hosts:ansiblebecome:yesbecome_user:rootroles:- geerlingguy.filebeat- geerlingguy.auditbeatI also just have another playbook to allow servers in the SIEM firewall
----- hosts:xxxxxxxxbecome:yesbecome_user:roottasks:- name:allow access to kibanaufw:rule:allowsrc:&#39;{{ item }}&#39;port:5601loop:- xx.xxx.xxx.xxx- name:allow acces to elasticsearchufw:rule:allowsrc:&#39;{{ item }}&#39;port:9200loop:- xx."/>
+---- hosts:ansiblebecome:yesbecome_user:rootroles:- geerlingguy.filebeat- geerlingguy.auditbeatI also just have another playbook to allow servers in the SIEM firewall (I use ufw, it just comes with debian)
+---- hosts:xxxxxxxxbecome:yesbecome_user:roottasks:- name:allow access to kibanaufw:rule:allowsrc:&#39;{{ item }}&#39;port:5601loop:- xx."/>
 
 
 <link rel="stylesheet" href="https://aziz.tn/css/syntax.css" />
@@ -71,7 +71,7 @@ Jan. 20, 2021
 </span><span class="w">  </span><span class="nt">roles</span><span class="p">:</span><span class="w">
 </span><span class="w">    </span>- <span class="l">geerlingguy.filebeat</span><span class="w">
 </span><span class="w">    </span>- <span class="l">geerlingguy.auditbeat</span><span class="w">
-</span></code></pre></div><p>I also just have another playbook to allow servers in the SIEM firewall</p>
+</span></code></pre></div><p>I also just have another playbook to allow servers in the SIEM firewall (I use ufw, it just comes with debian)</p>
 <div class="highlight"><pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
 </span><span class="w">
 </span><span class="w"></span>- <span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l">xxxxxxxx</span><span class="w">
