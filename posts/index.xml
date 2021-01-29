@@ -8,16 +8,6 @@
     <language>en-us</language>
     <lastBuildDate>Wed, 20 Jan 2021 00:00:00 +0100</lastBuildDate><atom:link href="https://aziz.tn/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Cheap ass proxy</title>
-      <link>https://aziz.tn/posts/proxy-using-netcat/</link>
-      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
-      
-      <guid>https://aziz.tn/posts/proxy-using-netcat/</guid>
-      <description>Found this cool one-liner in stackoverflow, really useful if I need to debug something really fast and can&amp;rsquo;t bother to open wireshark:
-ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 | tee /dev/stderr&amp;#39; </description>
-    </item>
-    
-    <item>
       <title>Code notes</title>
       <link>https://aziz.tn/posts/code-notes/</link>
       <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
@@ -25,28 +15,6 @@ ncat -lkv localhost 10000 -c &amp;#39;tee /dev/stderr | ncat -v localhost 8080 |
       <guid>https://aziz.tn/posts/code-notes/</guid>
       <description>Cheap ass proxy Simple script to automate creating databases Using ansible to deploy filebeat and auditbeat agents  In my code note I try to put useful stuff, I have on my computer that I can share that will be useful for other people.
 Cheap ass proxy Found this cool one-liner in stackoverflow, really useful if I need to debug something really fast and can&amp;rsquo;t bother to open wireshark:</description>
-    </item>
-    
-    <item>
-      <title>Simple script to automate creating databases</title>
-      <link>https://aziz.tn/posts/script-automate-creating-databases/</link>
-      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
-      
-      <guid>https://aziz.tn/posts/script-automate-creating-databases/</guid>
-      <description>I use this thing at work, thought I&amp;rsquo;ll just paste it here, this will just create a database user and 3 databases for different development environments, supposes that it needs to do ssh tunneling because that&amp;rsquo;s what we do at work.
-import click import mysql.connector def ssh_tunnel(ip, username, password, port, sshport): from sshtunnel import SSHTunnelForwarder server = SSHTunnelForwarder( ip, ssh_port=sshport, ssh_username=username, ssh_password=password, remote_bind_address=(&amp;#39;127.0.0.1&amp;#39;, port) ) server.daemon_forward_servers = True server.start() return server def create_mysql_databases(prefix, local_port, user, password): env = [&amp;#34;int&amp;#34;, &amp;#34;qualif&amp;#34;, &amp;#34;test&amp;#34;] mydb = mysql.</description>
-    </item>
-    
-    <item>
-      <title>Using ansible to deploy filebeat and auditbeat agents</title>
-      <link>https://aziz.tn/posts/ansible-deploy-filebeat-auditbeat-agents/</link>
-      <pubDate>Wed, 20 Jan 2021 00:00:00 +0100</pubDate>
-      
-      <guid>https://aziz.tn/posts/ansible-deploy-filebeat-auditbeat-agents/</guid>
-      <description>I manage a SIEM for work, and regularly my company adds new client servers, to automate deploying filebeat and auditbeat agents, I just use ansible playbooks for that, saves me tones of time.
-It&amp;rsquo;s pretty simple really I just use geerlingguy roles:
----- hosts:ansiblebecome:yesbecome_user:rootroles:- geerlingguy.filebeat- geerlingguy.auditbeatI also just have another playbook to allow servers in the SIEM firewall (I use ufw, it just comes with debian)
----- hosts:xxxxxxxxbecome:yesbecome_user:roottasks:- name:allow access to kibanaufw:rule:allowsrc:&amp;#39;{{ item }}&amp;#39;port:5601loop:- xx.</description>
     </item>
     
     <item>

@@ -4,13 +4,6 @@
     
         
         <url>
-            <loc>https://aziz.tn/posts/proxy-using-netcat/</loc>
-            <lastmod>2021-01-20T00:00:00+01:00</lastmod>
-        </url>
-        
-    
-        
-        <url>
             <loc>https://aziz.tn/posts/code-notes/</loc>
             <lastmod>2021-01-20T00:00:00+01:00</lastmod>
         </url>
@@ -26,20 +19,6 @@
         
         <url>
             <loc>https://aziz.tn/posts/</loc>
-            <lastmod>2021-01-20T00:00:00+01:00</lastmod>
-        </url>
-        
-    
-        
-        <url>
-            <loc>https://aziz.tn/posts/script-automate-creating-databases/</loc>
-            <lastmod>2021-01-20T00:00:00+01:00</lastmod>
-        </url>
-        
-    
-        
-        <url>
-            <loc>https://aziz.tn/posts/ansible-deploy-filebeat-auditbeat-agents/</loc>
             <lastmod>2021-01-20T00:00:00+01:00</lastmod>
         </url>
         
