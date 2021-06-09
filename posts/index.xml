@@ -24,7 +24,7 @@ Cheap ass proxy Found this cool one-liner in stackoverflow, really useful if I n
       
       <guid>https://aziz.tn/posts/cybertalents-reverse-engineering-problems-solutions/</guid>
       <description>I don&amp;rsquo;t present solutions for all problems, most of these are just some notes with high level ideas on how I solved them, I leave solving the problems as an exercise to the reader.
-  The Cybertalents reverse ctf had a couple of nice problems, I had two remaining problems one windows keylogger shit for which I was to lazy to write a program to decrypt the flag file since windows crypto api is not fun to be honest, well I googled how to use this windows bcrypt (not to be confused with the password hashing function, this is some Microsoft thing), and I find this 500 line code example, well I wouldn&amp;rsquo;t want to spend time on that 😂.</description>
+ The Cybertalents reverse ctf had a couple of nice problems, I had two remaining problems one windows keylogger shit for which I was to lazy to write a program to decrypt the flag file since windows crypto api is not fun to be honest, well I googled how to use this windows bcrypt (not to be confused with the password hashing function, this is some Microsoft thing), and I find this 500 line code example, well I wouldn&amp;rsquo;t want to spend time on that 😂.</description>
     </item>
     
     <item>

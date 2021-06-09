@@ -74,8 +74,7 @@ Oops, you didn&#39;t guess the right number. You got 13896084676171490950 with f
 71643905
 </code></pre></div><h2 id="analysis-of-the-binary">Analysis of the binary</h2>
 <p>Here is what the CFG looks like:</p>
-<figure>
-    <img src="/tamuctf/cfg-md.png"/> 
+<figure><img src="/tamuctf/cfg-md.png"/>
 </figure>
 
 <p>This looks really simple for a rust binary.</p>
@@ -148,8 +147,7 @@ Oops, you didn&#39;t guess the right number. You got 13896084676171490950 with f
 <span class="nf">xor</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rdx</span>
 <span class="nf">retn</span>
 </code></pre></div><p>Finally the generated value needs to satisfy these constraints:</p>
-<figure>
-    <img src="/tamuctf/conds-md.png"/> 
+<figure><img src="/tamuctf/conds-md.png"/>
 </figure>
 
 <p>The algorithm is simple, so I rewrote it in python, if there was some delicate stuff that I couldn&rsquo;t implement correctly, I could have a used a symbolic execution framework like angr or triton for this.</p>

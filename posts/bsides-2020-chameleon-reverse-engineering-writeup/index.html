@@ -78,8 +78,7 @@ Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
 </code></pre></div><p>I knew where to look, and I didn&rsquo;t focus on the decryption stuff to be honest.</p>
 <h3 id="reversing-the-binary">Reversing the binary</h3>
 <p>After identifying the encrypt function and changing some function names here is what the assembly looks like (you might want to zoom):</p>
-<figure>
-    <img src="/bsides/encrypt_func-md.png"/> 
+<figure><img src="/bsides/encrypt_func-md.png"/>
 </figure>
 
 <p>And here is what the hexrays decompiler gives us after changing some types and variable names:</p>
@@ -137,8 +136,7 @@ Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
 <p>Ok so the bread and butter of this problem is knowing how the mersenne twister works.</p>
 <h3 id="reversing-mersenne-twister">Reversing mersenne_twister</h3>
 <p>This is what the code looks like:</p>
-<figure>
-    <img src="/bsides/mersenne_twister-md.png"/> 
+<figure><img src="/bsides/mersenne_twister-md.png"/>
 </figure>
 
 <p>We can see that there are two loops.</p>
@@ -173,8 +171,7 @@ Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
 <p>Let&rsquo;s reverse getrandom now.</p>
 <h3 id="reversing-getrandom">Reversing getrandom</h3>
 <p>Here is what the code looks like:</p>
-<figure>
-    <img src="/bsides/getrandom-md.png"/> 
+<figure><img src="/bsides/getrandom-md.png"/>
 </figure>
 
 <p>The decompiled code looks good enough.</p>
@@ -352,8 +349,7 @@ Example: chameleon.exe --decrypt --id=abcd1234 ciphertext.txt plaintext.txt
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&#34;flag.png&#34;</span><span class="p">,</span> <span class="s2">&#34;w&#34;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
     <span class="n">myfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 </code></pre></div><p>And yaas! We have the flag!</p>
-<figure>
-    <img src="/bsides/flag-md.png"/> 
+<figure><img src="/bsides/flag-md.png"/>
 </figure>
 
 
